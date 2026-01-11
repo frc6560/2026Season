@@ -7,19 +7,12 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import java.util.HashMap;
 import java.util.Set;
 
-import com.team6560.frc2025.Constants.ElevatorConstants;
-import com.team6560.frc2025.Constants.WristConstants;
-import com.team6560.frc2025.Constants.DrivebaseConstants;
-import com.team6560.frc2025.subsystems.BallGrabber;
-import com.team6560.frc2025.subsystems.Elevator;
-import com.team6560.frc2025.subsystems.PipeGrabber;
-import com.team6560.frc2025.subsystems.Wrist;
-import com.team6560.frc2025.subsystems.swervedrive.SwerveSubsystem;
-import com.team6560.frc2025.utility.AutoAlignPath;
-import com.team6560.frc2025.utility.LimelightHelpers;
-import com.team6560.frc2025.utility.Setpoint;
 
-import com.team6560.frc2025.utility.Enums.*;
+import com.team6560.frc2026.Constants.DrivebaseConstants;
+
+import com.team6560.frc2026.subsystems.swervedrive.SwerveSubsystem;
+import com.team6560.frc2026.utility.AutoAlignPath;
+import com.team6560.frc2026.utility.LimelightHelpers;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
@@ -35,3 +28,96 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 
+
+
+
+public class ClimbAlign {
+    private AutoAlignPath path;
+
+    private TrapezoidProfile.State translationalState = new TrapezoidProfile.State(0, 0);
+    private TrapezoidProfile.State rotationalState = new TrapezoidProfile.State(0, 0);
+    private TrapezoidProfile.State targetTranslationalState = new TrapezoidProfile.State(0, 0); // The position is actually the error.
+    private TrapezoidProfile.State targetRotationalState = new TrapezoidProfile.State(0, 0);
+
+    private TrapezoidProfile.Constraints translationConstraints;
+    private TrapezoidProfile.Constraints rotationConstraint;
+    private TrapezoidProfile translationProfile;
+    private TrapezoidProfile rotationProfile;
+
+    private SwerveSubsystem drivetrain;
+    private Debouncer debouncer;
+
+    private double xError;
+    private double yError;
+    private double thetaError;
+
+    public ClimbAlign(SwerveSubsystem drivetrain) {
+        this.drivetrain = drivetrain;
+        
+    }
+
+    public Command alignToTagCommand(){
+        String limelightName = "limelight-front";
+
+        double taTarget = 20.980; // NOT CORRECT JUST PLACEHOLDER
+        double txTarget = 4.44;
+
+        double xTarget = 1.0 / Math.sqrt(taTarget); // TODO: possibly add a lookup table
+        double yTarget = Math.tan(Units.degreesToRadians(txTarget)) * xTarget;
+
+        
+        // Filters for rotation
+        LinearFilter filter = LinearFilter.movingAverage(5);
+        Command driveToTagPose = new FunctionalCommand(
+            () -> {
+                debouncer = new Debouncer(0.05);
+            }, 
+            () -> {
+                // x estimate relative to tag
+                double ta = LimelightHelpers.getTA(limelightName); 
+                if (ta <= 0.0) {
+                    drivetrain.drive(new ChassisSpeeds());
+                    return;
+                }
+                
+                double xEstimate = 1.0 / Math.sqrt(ta);
+                xError = xEstimate - xTarget;
+
+                // y estimate relative to tag
+                double tx = LimelightHelpers.getTX(limelightName);
+                double tx_rad = Units.degreesToRadians(tx);
+                double yEstimate = Math.tan(tx_rad) * xEstimate;
+                yError = yEstimate - yTarget;
+                
+                // rotation
+                thetaError = LimelightHelpers.getCameraPose3d_TargetSpace(limelightName).getRotation().getY(); // this number might be changed.
+                thetaError = filter.calculate(thetaError);
+
+                double xOutput = drivetrain.getXOutput(xError);
+                double yOutput = drivetrain.getYOutput(yError);
+                double rotationOutput = drivetrain.getRotationOutput(thetaError);
+                drivetrain.drive(
+                    new ChassisSpeeds(
+                        xOutput, 
+                        -yOutput, // inversion of axes 
+                        rotationOutput
+                    )
+                );
+            },
+            (interrupted) -> {
+                    drivetrain.drive(new ChassisSpeeds());
+                    drivetrain.updateOdometryWithVision(limelightName);
+            },
+            () -> debouncer.calculate(Math.abs(xError) < 0.014 && Math.abs(yError) < 0.014
+                    && Math.abs(thetaError) < 0.017),
+            drivetrain
+        );
+            
+        return driveToTagPose;
+    }
+
+    public Command getClimbAlign() {
+        return alignToTagCommand();
+    }
+
+}
