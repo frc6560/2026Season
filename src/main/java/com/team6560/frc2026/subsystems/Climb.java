@@ -1,4 +1,4 @@
-package com.team6560.frc2025.subsystems;
+package com.team6560.frc2026.subsystems;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -7,8 +7,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.team6560.frc2025.Constants.ClimbConstants;
-import com.team6560.frc2025.controls.XboxControls;
+import com.team6560.frc2026.Constants.ClimbConstants;
+import com.team6560.frc2026.controls.XboxControls;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 

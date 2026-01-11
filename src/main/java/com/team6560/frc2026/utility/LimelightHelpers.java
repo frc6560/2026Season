@@ -1,6 +1,6 @@
-//LimelightHelpers v1.12 (REQUIRES LLOS 2025.0 OR LATER)
+//LimelightHelpers v1.12 (REQUIRES LLOS 2026.0 OR LATER)
 
-package com.team6560.frc2025.utility;
+package com.team6560.frc2026.utility;
 
 import edu.wpi.first.networktables.DoubleArrayEntry;
 import edu.wpi.first.networktables.NetworkTable;

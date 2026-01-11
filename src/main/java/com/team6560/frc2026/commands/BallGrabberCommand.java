@@ -1,7 +1,7 @@
-package com.team6560.frc2025.commands;
+package com.team6560.frc2026.commands;
 
-import com.team6560.frc2025.controls.XboxControls;
-import com.team6560.frc2025.subsystems.BallGrabber;
+import com.team6560.frc2026.controls.XboxControls;
+import com.team6560.frc2026.subsystems.BallGrabber;
 
 import edu.wpi.first.wpilibj2.command.Command;
 public class BallGrabberCommand extends Command {

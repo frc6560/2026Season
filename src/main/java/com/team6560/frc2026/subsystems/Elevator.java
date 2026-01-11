@@ -1,4 +1,4 @@
-package com.team6560.frc2025.subsystems;
+package com.team6560.frc2026.subsystems;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -8,7 +8,7 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 // import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.team6560.frc2025.Constants.ElevatorConstants;
+import com.team6560.frc2026.Constants.ElevatorConstants;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;

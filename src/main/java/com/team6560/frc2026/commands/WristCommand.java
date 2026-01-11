@@ -1,9 +1,9 @@
-package com.team6560.frc2025.commands;
+package com.team6560.frc2026.commands;
 
-import com.team6560.frc2025.Constants.WristConstants;
-import com.team6560.frc2025.controls.XboxControls;
-import com.team6560.frc2025.subsystems.Wrist;
-import com.team6560.frc2025.subsystems.Wrist.State;
+import com.team6560.frc2026.Constants.WristConstants;
+import com.team6560.frc2026.controls.XboxControls;
+import com.team6560.frc2026.subsystems.Wrist;
+import com.team6560.frc2026.subsystems.Wrist.State;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;

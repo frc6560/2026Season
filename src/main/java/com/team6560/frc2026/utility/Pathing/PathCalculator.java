@@ -1,4 +1,4 @@
-package com.team6560.frc2025.utility.Pathing;
+package com.team6560.frc2026.utility.Pathing;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -7,8 +7,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
-import com.team6560.frc2025.Constants;
-import com.team6560.frc2025.utility.Setpoint;
+import com.team6560.frc2026.Constants;
+import com.team6560.frc2026.utility.Setpoint;
 
 // TODO LIST:
 // equalize headings

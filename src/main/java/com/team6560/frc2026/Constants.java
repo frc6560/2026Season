@@ -1,4 +1,4 @@
-package com.team6560.frc2025;
+package com.team6560.frc2026;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -11,11 +11,11 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import com.team6560.frc2025.utility.Enums.*;
+import com.team6560.frc2026.utility.Enums.*;
 
 import java.util.HashMap;
 
-import com.team6560.frc2025.utility.Enums.ReefIndex;
+import com.team6560.frc2026.utility.Enums.ReefIndex;
 public final class Constants {
 
   public static final double ROBOT_MASS = (148 - 20.3) * 0.453592; // 32lbs * kg per pound

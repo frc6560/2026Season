@@ -1,4 +1,4 @@
-package com.team6560.frc2025.controls;
+package com.team6560.frc2026.controls;
 
 import edu.wpi.first.wpilibj.XboxController;
 

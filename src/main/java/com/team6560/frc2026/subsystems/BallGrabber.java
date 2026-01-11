@@ -1,8 +1,8 @@
-package com.team6560.frc2025.subsystems;
+package com.team6560.frc2026.subsystems;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
-import static com.team6560.frc2025.utility.NetworkTable.NtValueDisplay.ntDispTab;
+import static com.team6560.frc2026.utility.NetworkTable.NtValueDisplay.ntDispTab;
 
 import com.revrobotics.spark.SparkMax;
 

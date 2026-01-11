@@ -1,10 +1,10 @@
-package com.team6560.frc2025.subsystems;
+package com.team6560.frc2026.subsystems;
 
-import com.team6560.frc2025.utility.Enums.*;
+import com.team6560.frc2026.utility.Enums.*;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import com.team6560.frc2025.controls.ButtonBoard;
+import com.team6560.frc2026.controls.ButtonBoard;
 
 public class LocationManager extends SubsystemBase {
     private ButtonBoard board;

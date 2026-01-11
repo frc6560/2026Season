@@ -1,6 +1,6 @@
-package com.team6560.frc2025.utility.Pathing;
+package com.team6560.frc2026.utility.Pathing;
 
-import com.team6560.frc2025.utility.Setpoint;
+import com.team6560.frc2026.utility.Setpoint;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
