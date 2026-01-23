@@ -2,17 +2,17 @@
   "drive": {
     "type": "talonfx",
     "id": 7,
-    "canbus": null
+    "canbus": "Canivore"
   },
   "angle": {
-    "type": "sparkmax_neo",
+    "type": "talonfx",
     "id": 9,
-    "canbus": null
+    "canbus": "Canivore"
   },
   "encoder": {
     "type": "cancoder",
     "id": 8,
-    "canbus": null
+    "canbus": "Canivore"
   },
   "inverted": {
     "drive": false,
