@@ -9,18 +9,6 @@
           "data": {
             "pathName": "shooter_1"
           }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "shooter_2"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "shooter_3"
-          }
         }
       ]
     }
