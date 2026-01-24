@@ -45,38 +45,20 @@ public class Sotm extends SubsystemBase {
     private final Turret turret;
     private final ShooterLUT shooterLUT;
     private final Hood hood;
-    private final Feeder feeder;
-    private final GroundIntake intake;
-
-    private final ManualControls controls;
     private Pose2d fieldTarget;
 
     public Sotm(
         SwerveSubsystem swerve,
         Flywheel flywheel,
         Turret turret,
-        ManualControls controls,
         ShooterLUT shooterLUT,
-        Hood hood,
-        Feeder feeder,
-        GroundIntake intake
+        Hood hood
         ) {
         this.swerveSubsystem = swerve;
         this.flywheel = flywheel;
         this.turret = turret;
         this.shooterLUT = shooterLUT;
         this.hood = hood;
-        this.controls = controls;
-        this.feeder = feeder;
-        this.intake = intake;
-    }
-
-    public void feed() {
-        feeder.feed();
-    }
-
-    public void stop() {
-        feeder.stop();
     }
 
     public void ShootBall() {

@@ -63,7 +63,7 @@ public class RobotContainer {
     private final ShooterLUT shooterLUT = new ShooterLUT();
     private final Turret turret = new Turret();
     
-    private final Snotm snotm = new Snotm(drivebase, flywheel, turret, controls, shooterLUT, hood, feeder, intake);
+    private final Sotm sotm = new Sotm(drivebase, flywheel, turret, shooterLUT, hood);
 
 
     private final AutoFactory factory;
@@ -79,7 +79,7 @@ public class RobotContainer {
 
 
     public RobotContainer() {
-      snotm.setDefaultCommand(new SnotmCommand(snotm, controls, feeder));
+      sotm.setDefaultCommand(new SotmCommand(sotm));
       factory = new AutoFactory(
       null,
       drivebase

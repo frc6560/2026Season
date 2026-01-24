@@ -26,23 +26,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class SotmCommand extends Command {
 
     private final Sotm sotm;
-    private final ManualControls controls;
-    private final SwerveSubsystem drivebase;
-    private final Flywheel flywheel;
-    // private final Turret turret;
-    private final ShooterLUT shooterLUT;
-    private final Feeder feeder;
-    // private final Hood hood;
 
-    public SotmCommand(Sotm sotm, SwerveSubsystem drivebase, Flywheel flywheel, ManualControls controls, ShooterLUT shooterLUT, Feeder feeder/*, Turret turret, Hood hood*/) {
+    public SotmCommand(Sotm sotm) {
         this.sotm = sotm;
-        this.controls = controls;
-        this.drivebase = drivebase;
-        this.flywheel = flywheel;
-        this.shooterLUT = shooterLUT;
-        this.feeder = feeder;
-        // this.turret = turret;
-        // this.hood = hood;
         addRequirements(sotm);
     }
     
@@ -54,7 +40,7 @@ public class SotmCommand extends Command {
 
     @Override
     public void execute() {
-        
+
     }
 
     public void periodic() {
