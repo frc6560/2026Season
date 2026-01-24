@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-public class SotmCommands extends Command {
+public class SotmCommand extends Command {
 
     private final Sotm sotm;
     private final ManualControls controls;
@@ -34,7 +34,7 @@ public class SotmCommands extends Command {
     private final Feeder feeder;
     // private final Hood hood;
 
-    public SotmCommands(Sotm sotm, SwerveSubsystem drivebase, Flywheel flywheel, ManualControls controls, ShooterLUT shooterLUT, Feeder feeder/*, Turret turret, Hood hood*/) {
+    public SotmCommand(Sotm sotm, SwerveSubsystem drivebase, Flywheel flywheel, ManualControls controls, ShooterLUT shooterLUT, Feeder feeder/*, Turret turret, Hood hood*/) {
         this.sotm = sotm;
         this.controls = controls;
         this.drivebase = drivebase;
@@ -54,14 +54,11 @@ public class SotmCommands extends Command {
 
     @Override
     public void execute() {
-        // if (controls.BallOut()) {
-        //     feeder.feed();
-        // }
+        
     }
 
     public void periodic() {
-        //sotm.ShootBall();
-
+        sotm.ShootBall();
     }
 
     

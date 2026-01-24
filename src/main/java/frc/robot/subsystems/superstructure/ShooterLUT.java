@@ -23,17 +23,18 @@ public class ShooterLUT {
         
 
         // RPM to velocity (m/s)
-        RPMtoVelocityMap.put(3200.0, 15.0);
-        RPMtoVelocityMap.put(3400.0, 16.5);
-        RPMtoVelocityMap.put(3700.0, 18.0);
-        RPMtoVelocityMap.put(4100.0, 20.5);
+        RPMtoVelocityMap.put(2000.0, 7.572);
+        //RPMtoVelocityMap.put(1500.0, 1.172); //probably wrong
+        RPMtoVelocityMap.put(1000.0, 6.421);
+        RPMtoVelocityMap.put(900.0, 6.163);
+        RPMtoVelocityMap.put(500.0, 0.35);
 
         // Velocity to RPM (m/s)
-        VelocitytoRPMMap.put(15.0, 3200.0);
-        VelocitytoRPMMap.put(16.5, 3400.0);
-        VelocitytoRPMMap.put(18.0, 3700.0);
-        VelocitytoRPMMap.put(20.5, 4100.0);
-
+        VelocitytoRPMMap.put(7.572, 2000.0);
+        VelocitytoRPMMap.put(6.421, 1000.0);
+        VelocitytoRPMMap.put(6.163, 900.0);
+        VelocitytoRPMMap.put(0.35, 500.0);
+        
     }
 
 
