@@ -74,7 +74,6 @@ public class SwerveSubsystem extends SubsystemBase {
                                                                             DrivebaseConstants.kA);
 
 
-
   PIDController m_pidControllerX = new PIDController(DrivebaseConstants.kP_translation, 
                                                           DrivebaseConstants.kI_translation, 
                                                           DrivebaseConstants.kD_translation);

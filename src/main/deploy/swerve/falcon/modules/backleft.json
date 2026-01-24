@@ -1,11 +1,11 @@
 {
   "drive": {
-    "type": "talonfx",
+    "type": "krakenx60",
     "id": 7,
     "canbus": "Canivore"
   },
   "angle": {
-    "type": "talonfx",
+    "type": "krakenx44",
     "id": 9,
     "canbus": "Canivore"
   },
@@ -18,7 +18,7 @@
     "drive": false,
     "angle": true
   },
-  "absoluteEncoderOffset": 257.168,
+  "absoluteEncoderOffset": 251.191,
   
   "location": {
     "front": -10.875,
