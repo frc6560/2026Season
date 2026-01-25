@@ -9,14 +9,17 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+/**
+ * Revolver subsystem using a simple state machine:
+ * IDLE -> SPINNING_UP -> FEEDING -> STAGED
+ * Handles beam breaker and override button cleanly.
+ */
 public class RevolverSubsystem extends SubsystemBase {
 
     /* ======================= Hardware ======================= */
     private final TalonFX panMotor = new TalonFX(10);
     private final TalonFX pusherMotor = new TalonFX(11);
-
-    // Beam breaker (DIO)
-    private final DigitalInput beamBreaker = new DigitalInput(0);
+    private final DigitalInput beamBreaker = new DigitalInput(0); // DIO 0
 
     /* ======================= RPM Targets ======================= */
     private static final double PAN_RUNNING_RPM = 180.0;
@@ -26,13 +29,35 @@ public class RevolverSubsystem extends SubsystemBase {
     private static final double PAN_GEAR_RATIO = 1.0;
     private static final double PUSHER_GEAR_RATIO = 1.0;
 
-    /* ======================= Commanded State ======================= */
-    private double panCommandedRPM = IDLE_RPM;
-    private double pusherCommandedRPM = IDLE_RPM;
-
-    /* ======================= Control ======================= */
     private final VelocityVoltage panRequest = new VelocityVoltage(0);
     private final VelocityVoltage pusherRequest = new VelocityVoltage(0);
+
+    /* ======================= State Machine ======================= */
+    public enum RevolverState {
+        IDLE,        // Both motors at idle
+        SPINNING_UP, // Pan spinning only
+        FEEDING,     // Pan + pusher running
+        STAGED,      // Pan spinning, ball held
+        OVERRIDE     // Feed regardless of beam breaker
+    }
+
+    private RevolverState state = RevolverState.IDLE;
+
+    /* ======================= Beam Breaker Override ======================= */
+    private boolean beamBreakOverride = false;
+
+    /* ======================= Motor Helpers ======================= */
+    private double rpmToRps(double rpm, double gearRatio) {
+        return (rpm / 60.0) / gearRatio;
+    }
+
+    private void setPanRPM(double rpm) {
+        panMotor.setControl(panRequest.withVelocity(rpmToRps(rpm, PAN_GEAR_RATIO)));
+    }
+
+    private void setPusherRPM(double rpm) {
+        pusherMotor.setControl(pusherRequest.withVelocity(rpmToRps(rpm, PUSHER_GEAR_RATIO)));
+    }
 
     /* ======================= Constructor ======================= */
     public RevolverSubsystem() {
@@ -40,103 +65,134 @@ public class RevolverSubsystem extends SubsystemBase {
         configureMotor(pusherMotor, 0.15, 60);
     }
 
-    /* ======================= Motor Config ======================= */
     private void configureMotor(TalonFX motor, double kP, int currentLimit) {
         TalonFXConfiguration config = new TalonFXConfiguration();
         config.Slot0.kP = kP;
         config.Slot0.kV = 0.12;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimit = currentLimit;
-
         motor.getConfigurator().apply(config);
         motor.setNeutralMode(NeutralModeValue.Brake);
     }
 
-    /* ======================= Helpers ======================= */
-    private double rpmToRps(double rpm, double gearRatio) {
-        return (rpm / 60.0) / gearRatio;
-    }
-
-    /* ======================= Beam Breaker ======================= */
+    /* ======================= Public API ======================= */
     public boolean hasBall() {
-        // If inverted, change to: return !beamBreaker.get();
-        return beamBreaker.get();
+        return beamBreaker.get(); // invert if needed
     }
 
-    /* ======================= Control Logic ======================= */
-
-    public void startPan() {
-        panCommandedRPM = PAN_RUNNING_RPM;
-        panMotor.setControl(
-            panRequest.withVelocity(rpmToRps(panCommandedRPM, PAN_GEAR_RATIO))
-        );
+    public void enableBeamBreakOverride() {
+        beamBreakOverride = true;
+        state = RevolverState.OVERRIDE;
     }
 
-    public void stopPan() {
-        panCommandedRPM = IDLE_RPM;
-        panMotor.setControl(
-            panRequest.withVelocity(rpmToRps(panCommandedRPM, PAN_GEAR_RATIO))
-        );
-    }
-
-    public void startPusher() {
-        // ❗ Stop feeding if ball already staged
+    public void disableBeamBreakOverride() {
+        beamBreakOverride = false;
         if (hasBall()) {
-            stopPusher();
-            return;
+            state = RevolverState.STAGED;
+        } else if (state != RevolverState.IDLE) {
+            state = RevolverState.FEEDING;
         }
-
-        pusherCommandedRPM = PUSHER_RUNNING_RPM;
-        pusherMotor.setControl(
-            pusherRequest.withVelocity(rpmToRps(pusherCommandedRPM, PUSHER_GEAR_RATIO))
-        );
     }
 
-    public void stopPusher() {
-        pusherCommandedRPM = IDLE_RPM;
-        pusherMotor.setControl(
-            pusherRequest.withVelocity(rpmToRps(pusherCommandedRPM, PUSHER_GEAR_RATIO))
-        );
+    public void requestFeed() {
+        if (state == RevolverState.IDLE) {
+            state = RevolverState.SPINNING_UP;
+        }
     }
 
-    public void startBoth() {
-        startPan();
-        startPusher();
-    }
-
-    public void stopBoth() {
-        stopPan();
-        stopPusher();
-    }
-
-    /* ======================= Feedback (FOR VIZ) ======================= */
-    public double getPanRPM() {
-        return panCommandedRPM;
-    }
-
-    public double getPusherRPM() {
-        return pusherCommandedRPM;
+    public void requestStop() {
+        state = RevolverState.IDLE;
     }
 
     public boolean panAtSpeed() {
-        return Math.abs(panCommandedRPM - PAN_RUNNING_RPM) < 5.0;
+        return true; // Placeholder: can replace with actual encoder check
     }
 
-    public boolean pusherAtSpeed() {
-        return Math.abs(pusherCommandedRPM - PUSHER_RUNNING_RPM) < 50.0;
+    /* ======================= State-based RPM Accessors ======================= */
+    public double getPanRPM() {
+        switch (state) {
+            case IDLE:
+                return IDLE_RPM;
+            case SPINNING_UP:
+            case FEEDING:
+            case STAGED:
+            case OVERRIDE:
+                return PAN_RUNNING_RPM;
+            default:
+                return IDLE_RPM;
+        }
     }
 
-    /* ======================= Periodic ======================= */
+    public double getPusherRPM() {
+        switch (state) {
+            case IDLE:
+            case SPINNING_UP:
+            case STAGED:
+                return IDLE_RPM;
+            case FEEDING:
+            case OVERRIDE:
+                return PUSHER_RUNNING_RPM;
+            default:
+                return IDLE_RPM;
+        }
+    }
+
+    /* ======================= Periodic State Machine ======================= */
     @Override
     public void periodic() {
+        switch (state) {
+            case IDLE:
+                setPanRPM(IDLE_RPM);
+                setPusherRPM(IDLE_RPM);
+                break;
 
-        // Auto-stop pusher if ball reaches beam breaker
-        if (hasBall() && pusherCommandedRPM > IDLE_RPM) {
-            stopPusher();
+            case SPINNING_UP:
+                setPanRPM(PAN_RUNNING_RPM);
+                setPusherRPM(IDLE_RPM);
+                if (panAtSpeed()) {
+                    state = RevolverState.FEEDING;
+                }
+                break;
+
+            case FEEDING:
+                setPanRPM(PAN_RUNNING_RPM);
+                if (!hasBall() || beamBreakOverride) {
+                    setPusherRPM(PUSHER_RUNNING_RPM);
+                } else {
+                    setPusherRPM(IDLE_RPM);
+                    state = RevolverState.STAGED;
+                }
+                break;
+
+            case STAGED:
+                setPanRPM(PAN_RUNNING_RPM);
+                setPusherRPM(IDLE_RPM);
+                break;
+
+            case OVERRIDE:
+                setPanRPM(PAN_RUNNING_RPM);
+                setPusherRPM(PUSHER_RUNNING_RPM);
+                break;
         }
 
-        SmartDashboard.putNumber("Revolver/Pan RPM", panCommandedRPM);
-        SmartDashboard.putNumber("Revolver/Pusher RPM", pusherCommandedRPM);
+        SmartDashboard.putString("Revolver/State", state.name());
         SmartDashboard.putBoolean("Revolver/Has Ball", hasBall());
+        SmartDashboard.putBoolean("Revolver/Beam Override", beamBreakOverride);
+        SmartDashboard.putNumber("Revolver/Pan RPM", getPanRPM());
+        SmartDashboard.putNumber("Revolver/Pusher RPM", getPusherRPM());
+    }
+
+    /* ======================= Convenience for RunRevolverCommand ======================= */
+    public void startBoth() {
+        requestFeed();
+    }
+
+    public void stopBoth() {
+        requestStop();
+    }
+
+    /* ======================= Accessors ======================= */
+    public RevolverState getState() {
+        return state;
     }
 }

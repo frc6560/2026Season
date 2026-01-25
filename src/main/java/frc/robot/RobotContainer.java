@@ -39,9 +39,8 @@ public class RobotContainer {
     private final ManualControls controls = new ManualControls(firstXbox, secondXbox);
 
     // Drivebase and vision
-    private final SwerveSubsystem drivebase  = new SwerveSubsystem(
-        new File(Filesystem.getDeployDirectory(), "swerve/falcon")
-    );
+    private final SwerveSubsystem drivebase =
+        new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve/falcon"));
     private final VisionSubsystem vision;
 
     // Subsystems
@@ -50,22 +49,24 @@ public class RobotContainer {
     private final BallGrabber ballGrabber = new BallGrabber();
     private final RevolverSubsystem revolver = new RevolverSubsystem();
     private final RevolverVisualization revolverViz = new RevolverVisualization(revolver);
-    private final SubsystemManager subsystemManager = new SubsystemManager(drivebase, elevator, arm, ballGrabber, controls);
+    private final SubsystemManager subsystemManager =
+        new SubsystemManager(drivebase, elevator, arm, ballGrabber, controls);
 
     // Autonomous
     private final AutoFactory factory;
     private final SendableChooser<Auto> autoChooser;
 
     // Drive input
-    private final SwerveInputStream driveAngularVelocity = SwerveInputStream.of(
-        drivebase.getSwerveDrive(),
-        () -> driverXbox.getLeftY() * -1,
-        () -> driverXbox.getLeftX() * -1
-    )
-    .withControllerRotationAxis(() -> -driverXbox.getRightX())
-    .deadband(OperatorConstants.DEADBAND)
-    .scaleTranslation(0.8)
-    .allianceRelativeControl(true);
+    private final SwerveInputStream driveAngularVelocity =
+        SwerveInputStream.of(
+                drivebase.getSwerveDrive(),
+                () -> driverXbox.getLeftY() * -1,
+                () -> driverXbox.getLeftX() * -1
+        )
+        .withControllerRotationAxis(() -> -driverXbox.getRightX())
+        .deadband(OperatorConstants.DEADBAND)
+        .scaleTranslation(0.8)
+        .allianceRelativeControl(true);
 
     public RobotContainer() {
 
@@ -98,20 +99,19 @@ public class RobotContainer {
         }
         vision = new VisionSubsystem(limelights);
 
-        // Button bindings
         configureBindings();
 
-        // In simulation, ensure both motors spin at idle automatically
+        // ✅ SIMULATION: idle only (10 RPM)
         if (RobotBase.isSimulation()) {
-            revolver.startPan();      // Will start at target RPM, but idle will always show in visualization
-            revolver.startPusher();
+            revolver.stopBoth();
         }
     }
 
     private void configureBindings() {
-        // Drive default command
-        Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
-        drivebase.setDefaultCommand(driveFieldOrientedAngularVelocity);
+
+        // Drive
+        Command driveCommand = drivebase.driveFieldOriented(driveAngularVelocity);
+        drivebase.setDefaultCommand(driveCommand);
 
         // Driver buttons
         driverXbox.a().onTrue(
@@ -119,35 +119,38 @@ public class RobotContainer {
         );
         driverXbox.b().onTrue(Commands.runOnce(() -> drivebase.trackAprilTag().schedule(), drivebase));
         driverXbox.y().onTrue(Commands.runOnce(() -> CommandScheduler.getInstance().cancelAll()));
-        driverXbox.x().onTrue(Commands.runOnce(() -> CommandScheduler.getInstance().schedule(drivebase.alignToTrenchCommand()), drivebase));
+        driverXbox.x().onTrue(
+            Commands.runOnce(() -> CommandScheduler.getInstance().schedule(drivebase.alignToTrenchCommand()), drivebase)
+        );
         driverXbox.start().onTrue(Commands.runOnce(drivebase::zeroNoAprilTagsGyro));
-        driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-        driverXbox.rightBumper().onTrue(Commands.none());
+        driverXbox.leftBumper().whileTrue(
+            Commands.runOnce(drivebase::lock, drivebase).repeatedly()
+        );
 
-        // Operator buttons (secondXbox)
+        // ================= REVOLVER =================
+
+        // Right Trigger: normal feed (state machine)
         new Trigger(() -> secondXbox.getRightTriggerAxis() > 0.5)
-            .whileTrue(new RunRevolverCommand(revolver));
+            .onTrue(Commands.runOnce(revolver::requestFeed, revolver))
+            .onFalse(Commands.runOnce(revolver::requestStop, revolver));
 
-        new Trigger(() -> secondXbox.getBButton())
-            .whileTrue(revolver.run(() -> revolver.startPusher()))
-            .whileFalse(revolver.runOnce(() -> revolver.stopPusher()));
+        // A: emergency stop
+        new Trigger(secondXbox::getAButton)
+            .onTrue(Commands.runOnce(revolver::requestStop, revolver));
 
-        new Trigger(() -> secondXbox.getXButton())
-            .whileTrue(revolver.run(() -> revolver.startPan()))
-            .whileFalse(revolver.runOnce(() -> revolver.stopPan()));
-
-        new Trigger(() -> secondXbox.getAButton())
-            .onTrue(revolver.runOnce(() -> revolver.stopBoth()));
+        // LEFT BUMPER: Beam Break Override
+        new Trigger(secondXbox::getLeftBumper)
+            .onTrue(Commands.runOnce(revolver::enableBeamBreakOverride, revolver))
+            .onFalse(Commands.runOnce(revolver::disableBeamBreakOverride, revolver));
     }
 
     public Command getAutonomousCommand() {
         return autoChooser.getSelected().getCommand();
     }
 
-    /**
-     * Call this every loop from Robot.robotPeriodic() to update Mechanism2d sticks
-     */
+    /** Called from Robot.robotPeriodic() */
     public void updateVisualization() {
         revolverViz.update();
     }
 }
+
