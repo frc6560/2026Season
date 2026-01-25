@@ -40,7 +40,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 
 public class Sotm extends SubsystemBase {
-    private final SwerveSubsystem swerveSubsystem;
+    private final SwerveSubsystem swerve;
     private final Flywheel flywheel;
     private final Turret turret;
     private final ShooterLUT shooterLUT;
@@ -54,7 +54,7 @@ public class Sotm extends SubsystemBase {
         ShooterLUT shooterLUT,
         Hood hood
         ) {
-        this.swerveSubsystem = swerve;
+        this.swerve = swerve;
         this.flywheel = flywheel;
         this.turret = turret;
         this.shooterLUT = shooterLUT;
@@ -63,7 +63,7 @@ public class Sotm extends SubsystemBase {
 
     public void ShootBall() {
         Optional<Alliance> alliance = DriverStation.getAlliance();
-        Pose2d robotPose = swerveSubsystem.getPose();
+        Pose2d robotPose = swerve.getPose();
         if (alliance.isPresent() && alliance.get() == Alliance.Blue) {
             if (robotPose.getX() < 4.03) {
                 shootState();
@@ -113,13 +113,13 @@ public class Sotm extends SubsystemBase {
     }
 
     public void shootState() {
-        Pose2d robotPose = swerveSubsystem.getPose();
+        Pose2d robotPose = swerve.getPose();
         Pose2d fieldTarget = getHubPose(DriverStation.getAlliance());
         BallOut(robotPose, fieldTarget);
     }
 
     public void passState() {
-        Pose2d robotPose = swerveSubsystem.getPose();
+        Pose2d robotPose = swerve.getPose();
         Pose2d fieldTarget = getPassPose(DriverStation.getAlliance());
         BallOut(robotPose, fieldTarget);
     }
@@ -133,7 +133,7 @@ public class Sotm extends SubsystemBase {
 
 
     public void BallOut(Pose2d robotPose, Pose2d fieldTarget) {
-        ChassisSpeeds robotSpeeds = swerveSubsystem.getRobotVelocity();
+        ChassisSpeeds robotSpeeds = swerve.getRobotVelocity();
 
         double rx = robotSpeeds.vxMetersPerSecond; // forward
         double ry = robotSpeeds.vyMetersPerSecond; // left
@@ -172,9 +172,7 @@ public class Sotm extends SubsystemBase {
             flywheel.setRPM(finalRPM);
         }
 
-        swerveSubsystem.alignRotationCommand(turretShootAngle);
-
-        turret.setGoal(turretShootAngle);
+        swerve.alignRotationCommand(turretShootAngle);
         hood.setGoal(launchAngle);
     }
 

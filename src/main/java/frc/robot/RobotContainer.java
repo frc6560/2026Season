@@ -60,10 +60,10 @@ public class RobotContainer {
     private final Flywheel flywheel = new Flywheel();
     private final GroundIntake intake = new GroundIntake();
     private final Hood hood = new Hood();
-    private final ShooterLUT shooterLUT = new ShooterLUT();
+    private final ShooterLUT lut = new ShooterLUT();
     private final Turret turret = new Turret();
     
-    private final Sotm sotm = new Sotm(drivebase, flywheel, turret, shooterLUT, hood);
+    private final Sotm sotm = new Sotm(drivebase, flywheel, turret, lut, hood);
 
 
     private final AutoFactory factory;
@@ -79,7 +79,9 @@ public class RobotContainer {
 
 
     public RobotContainer() {
-      sotm.setDefaultCommand(new SotmCommand(sotm));
+      sotm.setDefaultCommand(new SotmCommand(sotm, flywheel, drivebase, lut));
+      feeder.setDefaultCommand(new FeederCommand(feeder, controls));
+
       factory = new AutoFactory(
       null,
       drivebase
