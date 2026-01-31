@@ -74,6 +74,30 @@ public class Snotm extends SubsystemBase {
     }
 
     public void ShootBall() {
+        // Allow runtime override to ignore field-based limits (useful for testing).
+        // Toggle from SmartDashboard: "Shooting/IgnoreFieldLimits" (default false).
+        boolean ignoreLimits = false;
+        try {
+            ignoreLimits = edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.getBoolean("Shooting/IgnoreFieldLimits", false);
+            edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putBoolean("Snotm/IgnoreFieldLimits", ignoreLimits);
+        } catch (Exception e) {
+            // SmartDashboard may not be available in unit tests; ignore.
+        }
+
+        // If ignoreLimits is true, always attempt to shoot (bypass field checks).
+        if (ignoreLimits) {
+            // NOTE: This forces shooting behavior regardless of robot position/alliance.
+            shootState();
+            return;
+        }
+
+        // If you prefer to permanently bypass the limits in code, you can replace the
+        // entire method body with the following (commented-out) lines for quick testing:
+        // --------- START ALWAYS-SHOOT PLACEHOLDER ---------
+        // // shootState();
+        // // return;
+        // --------- END ALWAYS-SHOOT PLACEHOLDER ---------
+
         Optional<Alliance> alliance = DriverStation.getAlliance();
         Pose2d robotPose = swerveSubsystem.getPose();
         if (alliance.isPresent() && alliance.get() == Alliance.Blue) {
