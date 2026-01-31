@@ -223,6 +223,29 @@ public class SwerveSubsystem extends SubsystemBase {
       swerveDrive.driveFieldOriented(targetSpeeds);
     }
 
+    /**
+     * Align robot rotation to the limelight target using a proportional controller.
+     * This reads the limelight TX (degrees) and generates an omega command.
+     */
+    public void alignToLimelight() {
+      // Read the tx value from the limelight helper. Use default name "limelight" if present.
+      try {
+        double tx = LimelightHelpers.getTX("limelight");
+        if (!Double.isNaN(tx)) {
+          // convert degrees to radians
+          double txRad = Math.toRadians(tx);
+          // proportional gain for tx -> angular velocity (tune as needed)
+          double kPtx = 2.0; // tuned value; adjust if rotation is too aggressive
+          double omega = -kPtx * txRad; // negative sign to turn toward target
+          SmartDashboard.putNumber("Swerve/limelight_tx", tx);
+          SmartDashboard.putNumber("Swerve/limelight_omega", omega);
+          swerveDrive.driveFieldOriented(new ChassisSpeeds(0, 0, omega));
+        }
+      } catch (Exception e) {
+        // If limelight helper isn't available or name not present, just ignore
+      }
+    }
+
   @Override
   public void simulationPeriodic(){
   }

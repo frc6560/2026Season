@@ -13,6 +13,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -43,6 +44,8 @@ public class Flywheel extends SubsystemBase {
 
   //state
   private double targetRPM = 0.0;
+  // PID controller for flywheel (software fallback)
+  private final PIDController pidController;
 
 
 
@@ -61,6 +64,15 @@ public class Flywheel extends SubsystemBase {
 
     //initialize control
     velocityControl = new VelocityVoltage(0.0).withSlot(0);
+
+    // Create a PID controller scaled to output percent (uses constants scaled by max RPM)
+    double kPscaled = FlywheelConstants.kP / FlywheelConstants.FLYWHEEL_MAX_RPM;
+    double kIscaled = FlywheelConstants.kI / FlywheelConstants.FLYWHEEL_MAX_RPM;
+    double kDscaled = FlywheelConstants.kD / FlywheelConstants.FLYWHEEL_MAX_RPM;
+    pidController = new PIDController(kPscaled, kIscaled, kDscaled);
+
+    // Optional: limit integral windup
+    pidController.setIntegratorRange(-0.5, 0.5);
 
   }
 
@@ -103,13 +115,7 @@ public class Flywheel extends SubsystemBase {
 
   public void setRPM(double rpm){
     targetRPM = rpm;
-    
-    //convert to motor velocity 
-    double motorRPM = rpm * FlywheelConstants.FLYWHEEL_GEAR_RATIO; 
-
-    //send command to motor
-    leftFlywheelMotor.set(motorRPM/6000);
-    rightFlywheelMotor.set(motorRPM/6000);
+    // actual motor output will be computed in periodic using PID
   }
   
   public void stop(){
@@ -136,9 +142,25 @@ public class Flywheel extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
     // Telemetry for AdvantageScope and SmartDashboard
-    SmartDashboard.putNumber("Flywheel/Current RPM", getCurrentRPM());
+    double currentRPM = getCurrentRPM();
+    // Compute PID output (percent) using RPM error, pidController tuned in constructor
+    double output = pidController.calculate(currentRPM, targetRPM);
+    // clamp output
+    output = Math.max(-1.0, Math.min(1.0, output));
+
+    // As safety, if targetRPM is zero, stop motors
+    if (Math.abs(targetRPM) < 1e-3) {
+      leftFlywheelMotor.stopMotor();
+      rightFlywheelMotor.stopMotor();
+    } else {
+      leftFlywheelMotor.set(output);
+      rightFlywheelMotor.set(output);
+    }
+
+    SmartDashboard.putNumber("Flywheel/Current RPM", currentRPM);
     SmartDashboard.putNumber("Flywheel/Target RPM", targetRPM);
     SmartDashboard.putBoolean("Flywheel/At Target", atTargetRPM());
+    SmartDashboard.putNumber("Flywheel/PID Output", output);
     SmartDashboard.putNumber("Flywheel/Voltage", leftFlywheelMotor.getMotorVoltage().getValueAsDouble());
     SmartDashboard.putNumber("Flywheel/Current Draw", leftFlywheelMotor.getSupplyCurrent().getValueAsDouble());
 

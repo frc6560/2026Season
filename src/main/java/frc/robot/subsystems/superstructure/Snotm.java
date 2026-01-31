@@ -38,6 +38,7 @@ import frc.robot.ManualControls;
 import java.util.Optional;
 
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
 public class Snotm extends SubsystemBase {
@@ -137,8 +138,7 @@ public class Snotm extends SubsystemBase {
 
     public void idleState() {
         flywheel.setRPM(Constants.FlywheelConstants.FLYWHEEL_IDLE_RPM);
-        turret.setGoal(0);
-        hood.setGoal(0);
+        // Alphabot has no turret/hood: ensure drivetrain remains neutral for shooting
     }
 
 
@@ -155,18 +155,49 @@ public class Snotm extends SubsystemBase {
 
         double launchAngle = shooterLUT.getAngle(Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2)));
         double launchRPM = shooterLUT.getRPM(Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2)));
+        double launchVelocity = shooterLUT.getVelocity(launchRPM);
+
+        double vk = launchVelocity * Math.sin(Math.toRadians(launchAngle));
+        double vij = launchVelocity * Math.cos(Math.toRadians(launchAngle));
+        double vi = vij * Math.cos(Math.toRadians(robotHeadingDeg));
+        double vj = vij * Math.sin(Math.toRadians(robotHeadingDeg));
+
+        ChassisSpeeds fieldRelative =
+        ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, robotPose.getRotation());
+
+        double ri = fieldRelative.vxMetersPerSecond;
+        double rj = fieldRelative.vyMetersPerSecond;
+
+        double finalVi = vi-ri;
+        double finalVj = vj-rj;
+        double finalVk = vk;
+
+        double finalVelocity = Math.sqrt(Math.pow(finalVi,2) + Math.pow(finalVj,2) + Math.pow(finalVk,2));
+        double finalRPM = shooterLUT.getRPMForVelocity(finalVelocity);
+        double turretShootAngle = Math.toDegrees(Math.atan2(finalVj, finalVi));
 
         //IF YOU OVERSHOOT THEN RECALCULATE THE ANGLE BASED ON THE INVERSE TANGENT OF THE VELOCITY COMPONENTS
-        if (launchRPM > FlywheelConstants.FLYWHEEL_MAX_RPM) {
+        if (finalRPM > FlywheelConstants.FLYWHEEL_MAX_RPM) {
             flywheel.setRPM(FlywheelConstants.FLYWHEEL_MAX_RPM);
         } else {
-            flywheel.setRPM(launchRPM);
+            flywheel.setRPM(finalRPM);
         }
 
-        turret.setGoal(launchAngle);
-
-        // turret.setGoal(turretShootAngle);
-        // hood.setGoal(launchAngle);
+    // Align drivetrain to computed turret shooting angle (use odometry-based pose estimator)
+    swerveSubsystem.alignRotationCommand(turretShootAngle);
+    // Debug telemetry
+    SmartDashboard.putNumber("Snotm/robotPoseX", robotPose.getX());
+    SmartDashboard.putNumber("Snotm/robotPoseY", robotPose.getY());
+    SmartDashboard.putNumber("Snotm/dx", dx);
+    SmartDashboard.putNumber("Snotm/dy", dy);
+    SmartDashboard.putNumber("Snotm/robotHeadingDeg", robotHeadingDeg);
+    SmartDashboard.putNumber("Snotm/launchAngle", launchAngle);
+    SmartDashboard.putNumber("Snotm/launchRPM", launchRPM);
+    SmartDashboard.putNumber("Snotm/finalRPM", finalRPM);
+    SmartDashboard.putNumber("Snotm/finalVelocity", finalVelocity);
+    SmartDashboard.putNumber("Snotm/turretShootAngle", turretShootAngle);
+    SmartDashboard.putNumber("Snotm/robotVx", robotSpeeds.vxMetersPerSecond);
+    SmartDashboard.putNumber("Snotm/robotVy", robotSpeeds.vyMetersPerSecond);
     }
 
 }

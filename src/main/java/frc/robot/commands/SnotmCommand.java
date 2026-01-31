@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class SnotmCommand extends Command {
 
     private final Snotm snotm;
+    // kept references for future expansion (e.g., button-based overrides)
     private final ManualControls controls;
     private final Feeder feeder;
 
@@ -44,13 +45,10 @@ public class SnotmCommand extends Command {
 
     @Override
     public void execute() {
-        if (controls.BallOut()) {
-            feeder.feed();
-        }
-    }
-
-    public void periodic() {
+        // Run shooting state machine every scheduler cycle so limelight alignment and
+        // flywheel RPM calculation run continuously.
         snotm.ShootBall();
     }
+
 
 }

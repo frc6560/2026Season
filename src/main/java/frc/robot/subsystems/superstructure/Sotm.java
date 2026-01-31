@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import frc.robot.Constants;
 import frc.robot.Constants.DrivebaseConstants;
@@ -126,8 +127,7 @@ public class Sotm extends SubsystemBase {
 
     public void idleState() {
         flywheel.setRPM(Constants.FlywheelConstants.FLYWHEEL_IDLE_RPM);
-        turret.setGoal(0);
-        hood.setGoal(0);
+        // Alphabot has no turret/hood: keep flywheel idle and don't command non-existent mechanisms
     }
 
 
@@ -172,8 +172,21 @@ public class Sotm extends SubsystemBase {
             flywheel.setRPM(finalRPM);
         }
 
-        swerve.alignRotationCommand(turretShootAngle);
-        hood.setGoal(launchAngle);
+    // Align drivetrain to computed turret shooting angle (use odometry-based pose estimator)
+    swerve.alignRotationCommand(turretShootAngle);
+    // Debug telemetry
+    SmartDashboard.putNumber("Sotm/robotPoseX", robotPose.getX());
+    SmartDashboard.putNumber("Sotm/robotPoseY", robotPose.getY());
+    SmartDashboard.putNumber("Sotm/dx", dx);
+    SmartDashboard.putNumber("Sotm/dy", dy);
+    SmartDashboard.putNumber("Sotm/robotHeadingDeg", robotHeadingDeg);
+    SmartDashboard.putNumber("Sotm/launchAngle", launchAngle);
+    SmartDashboard.putNumber("Sotm/launchRPM", launchRPM);
+    SmartDashboard.putNumber("Sotm/finalRPM", finalRPM);
+    SmartDashboard.putNumber("Sotm/finalVelocity", finalVelocity);
+    SmartDashboard.putNumber("Sotm/turretShootAngle", turretShootAngle);
+    SmartDashboard.putNumber("Sotm/robotVx", robotSpeeds.vxMetersPerSecond);
+    SmartDashboard.putNumber("Sotm/robotVy", robotSpeeds.vyMetersPerSecond);
     }
 
 }

@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import frc.robot.commands.SotmCommand;
 import frc.robot.commands.SnotmCommand;
 import frc.robot.commands.FeederCommand;
 import frc.robot.commands.GroundIntakeCommand;
@@ -64,6 +63,7 @@ public class RobotContainer {
     private final Turret turret = new Turret();
     
     private final Sotm sotm = new Sotm(drivebase, flywheel, turret, lut, hood);
+  private final Snotm snotm = new Snotm(drivebase, flywheel, turret, controls, lut, hood, feeder, intake);
 
 
     private final AutoFactory factory;
@@ -79,7 +79,7 @@ public class RobotContainer {
 
 
     public RobotContainer() {
-      sotm.setDefaultCommand(new SotmCommand(sotm, flywheel, drivebase, lut));
+      snotm.setDefaultCommand(new SnotmCommand(snotm, controls, feeder));
       feeder.setDefaultCommand(new FeederCommand(feeder, controls));
 
       factory = new AutoFactory(

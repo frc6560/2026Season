@@ -122,8 +122,8 @@ public final class Constants {
 
   public static final class TurretConstants {
     /** CAN IDs */
-    public static final int MOTOR_ID = 0;      // TODO: set correct ID
-    public static final int ENCODER_ID = 0;    // TODO: set correct ID
+  public static final int MOTOR_ID = 30;      // Default placeholder ID (change to your wiring)
+  public static final int ENCODER_ID = 31;    // Default placeholder ID (change to your wiring)
 
     /** Characterization Gains */
     public static final double kS = 0.1;
@@ -153,8 +153,8 @@ public final class Constants {
 
   public static final class HoodConstants {
     /** CAN IDs */
-    public static final int MOTOR_ID = 0;      // TODO: set correct ID
-    public static final int ENCODER_ID = 0;    // TODO: set correct ID
+    public static final int MOTOR_ID = 32;      // Default placeholder ID (change to your wiring)
+    public static final int ENCODER_ID = 33;    // Default placeholder ID (change to your wiring)
 
     /** Characterization Gains */
     public static final double kS = 0.1;
