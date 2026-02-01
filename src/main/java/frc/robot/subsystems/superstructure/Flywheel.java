@@ -59,7 +59,7 @@ public class Flywheel extends SubsystemBase {
     leftFlywheelMotor = new TalonFX(FlywheelConstants.LEFT_FLYWHEEL_ID, "rio");
     rightFlywheelMotor = new TalonFX(FlywheelConstants.RIGHT_FLYWHEEL_ID, "rio");
 
-    configureMotor(leftFlywheelMotor, true); 
+    configureLeftMotor(leftFlywheelMotor); 
     configureMotor (rightFlywheelMotor, false);
 
     //initialize control
@@ -91,10 +91,32 @@ public class Flywheel extends SubsystemBase {
     //motor output 
     config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
-    // Apply inversion
-    if (inverted) {
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
+    //current limits
+    config.CurrentLimits.SupplyCurrentLimit = FlywheelConstants.FLYWHEEL_SUPPLY_CURRENT_LIMIT;
+    config.CurrentLimits.SupplyCurrentLimitEnable = true;
+
+    flywheelMotor.getConfigurator().apply(config);
     }
+
+    private void configureLeftMotor(TalonFX flywheelMotor){ 
+    //motor configuration
+    TalonFXConfiguration config = new TalonFXConfiguration();
+
+    //pid config
+    //config.Slot0 = FlywheelConstants.FLYWHEEL_PID_CONFIG;
+    config.Slot0.kP = FlywheelConstants.kP;
+    config.Slot0.kI = FlywheelConstants.kI;
+    config.Slot0.kD = FlywheelConstants.kD;
+    config.Slot0.kV = FlywheelConstants.kV;
+    //config.Slot0 = config.Slot0;
+
+    //motor output 
+    config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+
+    // Apply inversion
+    config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+  
 
 
     //current limits
@@ -125,7 +147,12 @@ public class Flywheel extends SubsystemBase {
   }
 
   public double getCurrentRPM(){
-    double motorRPM = leftFlywheelMotor.getVelocity().getValueAsDouble(); 
+    // Use both motors' encoder readings and take the average of their absolute
+    // velocities. This makes the RPM measurement robust to motor inversion (so
+    // the controller always sees a positive RPM value).
+    double leftVel = leftFlywheelMotor.getVelocity().getValueAsDouble();
+    double rightVel = rightFlywheelMotor.getVelocity().getValueAsDouble();
+    double motorRPM = (Math.abs(leftVel) + Math.abs(rightVel)) / 2.0;
     return motorRPM / FlywheelConstants.FLYWHEEL_GEAR_RATIO;
   }
 
@@ -153,7 +180,9 @@ public class Flywheel extends SubsystemBase {
       leftFlywheelMotor.stopMotor();
       rightFlywheelMotor.stopMotor();
     } else {
-      leftFlywheelMotor.set(output);
+      // Invert the left motor's command so the left motor spins the opposite
+      // direction relative to the right motor (physically inverted motor).
+      leftFlywheelMotor.set(-output);
       rightFlywheelMotor.set(output);
     }
 
