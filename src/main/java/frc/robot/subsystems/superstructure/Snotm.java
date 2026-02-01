@@ -94,31 +94,31 @@ public class Snotm extends SubsystemBase {
         // If you prefer to permanently bypass the limits in code, you can replace the
         // entire method body with the following (commented-out) lines for quick testing:
         // --------- START ALWAYS-SHOOT PLACEHOLDER ---------
-        // // shootState();
-        // // return;
+        shootState();
+        return;
         // --------- END ALWAYS-SHOOT PLACEHOLDER ---------
 
-        Optional<Alliance> alliance = DriverStation.getAlliance();
-        Pose2d robotPose = swerveSubsystem.getPose();
-        if (alliance.isPresent() && alliance.get() == Alliance.Blue) {
-            if (robotPose.getX() < 4.03) {
-                shootState();
-            } else if (robotPose.getX() > 4.03 && robotPose.getX() < 16.45-4.03) {
-                passState();
-            } else {
-                idleState();
-            }
-        } else if (alliance.isPresent() && alliance.get() == Alliance.Red) {
-            if (robotPose.getX() > 16.54-4.03) {
-                shootState();
-            } else if (robotPose.getX() < 16.54-4.03 && robotPose.getX() > 4.03) {
-                passState();
-            } else {
-                idleState();
-            }
-        } else {
-            idleState();
-        }
+        // Optional<Alliance> alliance = DriverStation.getAlliance();
+        // Pose2d robotPose = swerveSubsystem.getPose();
+        // if (alliance.isPresent() && alliance.get() == Alliance.Blue) {
+        //     if (robotPose.getX() < 4.03) {
+        //         shootState();
+        //     } else if (robotPose.getX() > 4.03 && robotPose.getX() < 16.45-4.03) {
+        //         passState();
+        //     } else {
+        //         idleState();
+        //     }
+        // } else if (alliance.isPresent() && alliance.get() == Alliance.Red) {
+        //     if (robotPose.getX() > 16.54-4.03) {
+        //         shootState();
+        //     } else if (robotPose.getX() < 16.54-4.03 && robotPose.getX() > 4.03) {
+        //         passState();
+        //     } else {
+        //         idleState();
+        //     }
+        // } else {
+        //     idleState();
+        // }
     }
 
     public void initialize() {
