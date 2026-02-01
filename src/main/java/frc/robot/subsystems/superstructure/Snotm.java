@@ -38,7 +38,6 @@ import frc.robot.ManualControls;
 import java.util.Optional;
 
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
 public class Snotm extends SubsystemBase {
@@ -74,51 +73,27 @@ public class Snotm extends SubsystemBase {
     }
 
     public void ShootBall() {
-        // Allow runtime override to ignore field-based limits (useful for testing).
-        // Toggle from SmartDashboard: "Shooting/IgnoreFieldLimits" (default false).
-        boolean ignoreLimits = false;
-        try {
-            ignoreLimits = edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.getBoolean("Shooting/IgnoreFieldLimits", false);
-            edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putBoolean("Snotm/IgnoreFieldLimits", ignoreLimits);
-        } catch (Exception e) {
-            // SmartDashboard may not be available in unit tests; ignore.
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+        Pose2d robotPose = swerveSubsystem.getPose();
+        if (alliance.isPresent() && alliance.get() == Alliance.Blue) {
+            if (robotPose.getX() < 4.03) {
+                shootState();
+            } else if (robotPose.getX() > 4.03 && robotPose.getX() < 16.45-4.03) {
+                passState();
+            } else {
+                idleState();
+            }
+        } else if (alliance.isPresent() && alliance.get() == Alliance.Red) {
+            if (robotPose.getX() > 16.54-4.03) {
+                shootState();
+            } else if (robotPose.getX() < 16.54-4.03 && robotPose.getX() > 4.03) {
+                passState();
+            } else {
+                idleState();
+            }
+        } else {
+            idleState();
         }
-
-        // If ignoreLimits is true, always attempt to shoot (bypass field checks).
-        if (ignoreLimits) {
-            // NOTE: This forces shooting behavior regardless of robot position/alliance.
-            shootState();
-            return;
-        }
-
-        // If you prefer to permanently bypass the limits in code, you can replace the
-        // entire method body with the following (commented-out) lines for quick testing:
-        // --------- START ALWAYS-SHOOT PLACEHOLDER ---------
-        shootState();
-        return;
-        // --------- END ALWAYS-SHOOT PLACEHOLDER ---------
-
-        // Optional<Alliance> alliance = DriverStation.getAlliance();
-        // Pose2d robotPose = swerveSubsystem.getPose();
-        // if (alliance.isPresent() && alliance.get() == Alliance.Blue) {
-        //     if (robotPose.getX() < 4.03) {
-        //         shootState();
-        //     } else if (robotPose.getX() > 4.03 && robotPose.getX() < 16.45-4.03) {
-        //         passState();
-        //     } else {
-        //         idleState();
-        //     }
-        // } else if (alliance.isPresent() && alliance.get() == Alliance.Red) {
-        //     if (robotPose.getX() > 16.54-4.03) {
-        //         shootState();
-        //     } else if (robotPose.getX() < 16.54-4.03 && robotPose.getX() > 4.03) {
-        //         passState();
-        //     } else {
-        //         idleState();
-        //     }
-        // } else {
-        //     idleState();
-        // }
     }
 
     public void initialize() {
@@ -162,7 +137,8 @@ public class Snotm extends SubsystemBase {
 
     public void idleState() {
         flywheel.setRPM(Constants.FlywheelConstants.FLYWHEEL_IDLE_RPM);
-        // Alphabot has no turret/hood: ensure drivetrain remains neutral for shooting
+        turret.setGoal(0);
+        hood.setGoal(0);
     }
 
 
@@ -179,49 +155,18 @@ public class Snotm extends SubsystemBase {
 
         double launchAngle = shooterLUT.getAngle(Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2)));
         double launchRPM = shooterLUT.getRPM(Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2)));
-        double launchVelocity = shooterLUT.getVelocity(launchRPM);
-
-        double vk = launchVelocity * Math.sin(Math.toRadians(launchAngle));
-        double vij = launchVelocity * Math.cos(Math.toRadians(launchAngle));
-        double vi = vij * Math.cos(Math.toRadians(robotHeadingDeg));
-        double vj = vij * Math.sin(Math.toRadians(robotHeadingDeg));
-
-        ChassisSpeeds fieldRelative =
-        ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, robotPose.getRotation());
-
-        double ri = fieldRelative.vxMetersPerSecond;
-        double rj = fieldRelative.vyMetersPerSecond;
-
-        double finalVi = vi-ri;
-        double finalVj = vj-rj;
-        double finalVk = vk;
-
-        double finalVelocity = Math.sqrt(Math.pow(finalVi,2) + Math.pow(finalVj,2) + Math.pow(finalVk,2));
-        double finalRPM = shooterLUT.getRPMForVelocity(finalVelocity);
-        double turretShootAngle = Math.toDegrees(Math.atan2(finalVj, finalVi));
 
         //IF YOU OVERSHOOT THEN RECALCULATE THE ANGLE BASED ON THE INVERSE TANGENT OF THE VELOCITY COMPONENTS
-        if (finalRPM > FlywheelConstants.FLYWHEEL_MAX_RPM) {
+        if (launchRPM > FlywheelConstants.FLYWHEEL_MAX_RPM) {
             flywheel.setRPM(FlywheelConstants.FLYWHEEL_MAX_RPM);
         } else {
-            flywheel.setRPM(finalRPM);
+            flywheel.setRPM(launchRPM);
         }
 
-    // Align drivetrain to computed turret shooting angle (use odometry-based pose estimator)
-    swerveSubsystem.alignRotationCommand(turretShootAngle);
-    // Debug telemetry
-    SmartDashboard.putNumber("Snotm/robotPoseX", robotPose.getX());
-    SmartDashboard.putNumber("Snotm/robotPoseY", robotPose.getY());
-    SmartDashboard.putNumber("Snotm/dx", dx);
-    SmartDashboard.putNumber("Snotm/dy", dy);
-    SmartDashboard.putNumber("Snotm/robotHeadingDeg", robotHeadingDeg);
-    SmartDashboard.putNumber("Snotm/launchAngle", launchAngle);
-    SmartDashboard.putNumber("Snotm/launchRPM", launchRPM);
-    SmartDashboard.putNumber("Snotm/finalRPM", finalRPM);
-    SmartDashboard.putNumber("Snotm/finalVelocity", finalVelocity);
-    SmartDashboard.putNumber("Snotm/turretShootAngle", turretShootAngle);
-    SmartDashboard.putNumber("Snotm/robotVx", robotSpeeds.vxMetersPerSecond);
-    SmartDashboard.putNumber("Snotm/robotVy", robotSpeeds.vyMetersPerSecond);
+        turret.setGoal(launchAngle);
+
+        // turret.setGoal(turretShootAngle);
+        // hood.setGoal(launchAngle);
     }
 
 }
