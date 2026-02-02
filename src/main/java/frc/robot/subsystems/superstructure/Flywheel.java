@@ -65,14 +65,7 @@ public class Flywheel extends SubsystemBase {
     //initialize control
     velocityControl = new VelocityVoltage(0.0).withSlot(0);
 
-    // Create a PID controller scaled to output percent (uses constants scaled by max RPM)
-    double kPscaled = FlywheelConstants.kP / FlywheelConstants.FLYWHEEL_MAX_RPM;
-    double kIscaled = FlywheelConstants.kI / FlywheelConstants.FLYWHEEL_MAX_RPM;
-    double kDscaled = FlywheelConstants.kD / FlywheelConstants.FLYWHEEL_MAX_RPM;
-    pidController = new PIDController(kPscaled, kIscaled, kDscaled);
-
-    // Optional: limit integral windup
-    pidController.setIntegratorRange(-0.5, 0.5);
+    pidController = new PIDController(FlywheelConstants.kP, FlywheelConstants.kI, FlywheelConstants.kD);
 
   }
 
@@ -147,16 +140,9 @@ public class Flywheel extends SubsystemBase {
     // Compute PID output (percent) using RPM error, pidController tuned in constructor
     double output = pidController.calculate(currentRPM, targetRPM);
     // clamp output
-    output = Math.max(-1.0, Math.min(1.0, output));
-
-    // As safety, if targetRPM is zero, stop motors
-    if (Math.abs(targetRPM) < 1e-3) {
-      leftFlywheelMotor.stopMotor();
-      rightFlywheelMotor.stopMotor();
-    } else {
-      leftFlywheelMotor.set(-output);
-      rightFlywheelMotor.set(output);
-    }
+    leftFlywheelMotor.setControl(velocityControl.withVelocity(targetRPM / 60.0));  // Velocity control
+    rightFlywheelMotor.setControl(velocityControl.withVelocity(targetRPM / 60.0));
+    
 
     SmartDashboard.putNumber("Flywheel/Current RPM", currentRPM);
     SmartDashboard.putNumber("Flywheel/Target RPM", targetRPM);
