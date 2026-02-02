@@ -51,6 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.json.simple.parser.ParseException;
@@ -85,6 +86,11 @@ public class SwerveSubsystem extends SubsystemBase {
   PIDController m_pidControllerTheta = new PIDController(DrivebaseConstants.kP_rotation,
                                                           DrivebaseConstants.kI_rotation,
                                                           DrivebaseConstants.kD_rotation); // tune values
+  // Rotation override: when active, default drive will ignore controller rotation
+  // inputs and the overrideOmega will be used by any active alignment routines.
+  private final AtomicBoolean rotationOverrideActive = new AtomicBoolean(false);
+  private final AtomicReference<Double> rotationOverrideOmega = new AtomicReference<>(0.0);
+  private final AtomicReference<String> rotationOverrideOwner = new AtomicReference<>(null);
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -221,6 +227,68 @@ public class SwerveSubsystem extends SubsystemBase {
       );
   
       swerveDrive.driveFieldOriented(targetSpeeds);
+    }
+
+    /**
+     * Returns a Command that performs a short-duration alignment to the
+     * specified target angle. The command requires the swerve subsystem so
+     * scheduling it will briefly (0.01s) lock the drivetrain. This is
+     * intended to be a very small ownership window to avoid hardware fighting
+     * while allowing translation to remain mostly responsive.
+     *
+     * @param targetAngle target heading in radians
+     * @return Command that when scheduled will run the align routine for up to 0.01s
+     */
+    public edu.wpi.first.wpilibj2.command.Command alignRotationCmd(double targetAngle) {
+      final double toleranceRad = Math.toRadians(2.0);
+      final double maxOmega = swerveDrive.getMaximumChassisAngularVelocity() * 0.6;
+      final double[] prevOmega = new double[] {0.0};
+  // rotation override owner id used below
+  final String ownerId = "alignCmd";
+
+      FunctionalCommand cmd = new FunctionalCommand(
+          () -> {
+            // initialize PID - use continuous input (wrap-around) and set tolerance
+            m_pidControllerTheta.reset();
+            m_pidControllerTheta.setP(DrivebaseConstants.kP_rotation);
+            m_pidControllerTheta.setI(DrivebaseConstants.kI_rotation);
+            m_pidControllerTheta.setD(DrivebaseConstants.kD_rotation);
+            m_pidControllerTheta.enableContinuousInput(-Math.PI, Math.PI);
+            m_pidControllerTheta.setTolerance(toleranceRad);
+            // set the desired heading as the PID setpoint
+            m_pidControllerTheta.setSetpoint(targetAngle);
+            prevOmega[0] = 0.0;
+            // claim the rotation override (start with zero until we compute)
+            setRotationOverride(0.0, ownerId);
+          },
+          () -> {
+            double currentHeading = getPose().getRotation().getRadians();
+            // Use calculate(measurement) with setpoint already configured above.
+            double rawOmega = m_pidControllerTheta.calculate(currentHeading);
+            double scaled = rawOmega * 0.6;
+            double dt = 0.02; // assume scheduler period
+            double maxDelta = maxOmega * 4.0 * dt;
+            double delta = MathUtil.clamp(scaled - prevOmega[0], -maxDelta, maxDelta);
+            double nextOmega = prevOmega[0] + delta;
+            double clampedOmega = MathUtil.clamp(nextOmega, -maxOmega, maxOmega);
+            prevOmega[0] = clampedOmega;
+            SmartDashboard.putNumber("Swerve/alignCmd_rawOmega", rawOmega);
+            SmartDashboard.putNumber("Swerve/alignCmd_clampedOmega", clampedOmega);
+            // publish the override so the default drive command will apply
+            // the angular component while keeping translation alive.
+            setRotationOverride(clampedOmega, ownerId);
+          },
+          (interrupted) -> {
+            // Stop rotating when finished/interrupted and clear the override
+            clearRotationOverride(ownerId);
+            drive(new ChassisSpeeds());
+          },
+          () -> m_pidControllerTheta.atSetpoint()
+      );
+
+      // Use a small override window (0.05s) to allow the alignment to nudge
+      // the drivetrain while preventing driver rotation input from interfering.
+      return cmd.withTimeout(0.05);
     }
 
     /**
@@ -677,6 +745,39 @@ public class SwerveSubsystem extends SubsystemBase {
   public Rotation2d getHeading()
   {
     return getPose().getRotation();
+  }
+
+  /**
+   * Returns whether rotation input is currently locked by an alignment command.
+   * When true, default drive should suppress operator angular inputs to avoid
+   * writer conflicts and jitter.
+   */
+  public boolean isRotationOverridden() {
+    return rotationOverrideActive.get();
+  }
+
+  /** Set a rotation override value (radians/sec) and owner id. */
+  public void setRotationOverride(double omega, String owner) {
+    rotationOverrideOmega.set(omega);
+    rotationOverrideOwner.set(owner);
+    rotationOverrideActive.set(true);
+  }
+
+  /** Clear rotation override if the owner matches. */
+  public void clearRotationOverride(String owner) {
+    String cur = rotationOverrideOwner.get();
+    if (cur == null || cur.equals(owner)) {
+      rotationOverrideOwner.set(null);
+      rotationOverrideOmega.set(0.0);
+      rotationOverrideActive.set(false);
+    }
+  }
+
+  /** Returns the currently published override omega (radians/sec).
+   * Valid only if {@link #isRotationOverridden()} is true.
+   */
+  public double getRotationOverrideOmega() {
+    return rotationOverrideOmega.get();
   }
 
   /**

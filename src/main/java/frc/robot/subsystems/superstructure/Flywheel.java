@@ -153,7 +153,7 @@ public class Flywheel extends SubsystemBase {
       leftFlywheelMotor.stopMotor();
       rightFlywheelMotor.stopMotor();
     } else {
-      leftFlywheelMotor.set(output);
+      leftFlywheelMotor.set(-output);
       rightFlywheelMotor.set(output);
     }
 

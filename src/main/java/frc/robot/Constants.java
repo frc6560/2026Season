@@ -43,20 +43,22 @@ public final class Constants {
     public static final double kStdvTheta = 3;
 
     public static final double kP_translation = 4.0;
-    public static final double kP_rotation = 4.0;
+  // Increased slightly per tuning request
+  public static final double kP_rotation = 8.0;
 
     public static final double kI_translation = 0.0;
     public static final double kI_rotation = 0.0;
 
     public static final double kD_translation = 0.0;
-    public static final double kD_rotation = 0.0;
+    // Tuned derivative for rotation to reduce oscillation
+    public static final double kD_rotation = 0.7;
   }
 
   public static final class FieldConstants{
     // public static final Pose2d START = new Pose2d(3.152, 4.018, Rotation2d.fromDegrees(-90));
     public static final Pose2d TARGET_POSE = new Pose2d(3.650, 4.010, Rotation2d.fromDegrees(0));
-    public static final Pose2d HUB_BLUE_POSITION = new Pose2d(4.03,8.07/2, new Rotation2d(0));
-    public static final Pose2d HUB_RED_POSITION = new Pose2d(16.54-4.03,8.07/2, new Rotation2d(0));
+    public static final Pose2d HUB_BLUE_POSITION = new Pose2d(4.63,8.07/2, new Rotation2d(0));
+    public static final Pose2d HUB_RED_POSITION = new Pose2d(16.54-4.63,8.07/2, new Rotation2d(0));
     public static final Pose2d PASS_BLUE_POSITION = new Pose2d(-1.5,8.07/2, new Rotation2d(0));
     public static final Pose2d PASS_RED_POSITION = new Pose2d(16.54+1.5,8.07/2, new Rotation2d(0));
   }

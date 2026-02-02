@@ -36,6 +36,7 @@ import frc.robot.subsystems.superstructure.Feeder;
 import frc.robot.subsystems.superstructure.GroundIntake;
 import frc.robot.ManualControls;
 import java.util.Optional;
+import edu.wpi.first.math.MathUtil;
 
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
@@ -51,6 +52,8 @@ public class Snotm extends SubsystemBase {
 
     private final ManualControls controls;
     private Pose2d fieldTarget;
+    // Reusable short-lock alignment command
+    private edu.wpi.first.wpilibj2.command.Command alignCommand = null;
 
     public Snotm(
         SwerveSubsystem swerve,
@@ -164,6 +167,34 @@ public class Snotm extends SubsystemBase {
         }
 
         turret.setGoal(launchAngle);
+
+    // Also schedule a short alignment command to point the drivetrain
+    // toward the field target. This command grabs the drivetrain for a
+    // small window (0.05s) to avoid writer conflicts while still
+    // nudging heading toward the target when needed.
+                double angleToTarget = Math.atan2(fieldTarget.getY() - robotPose.getY(), fieldTarget.getX() - robotPose.getX());
+                // Compute front-facing target using explicit degree-normalization to avoid
+                // subtle modulus behavior. This produces an angle in [-180,180] degrees
+                // then converts to radians.
+                double targetDeg = Math.toDegrees(angleToTarget);
+                // normalize to (-180, 180]
+                targetDeg = ((targetDeg + 180.0) % 360.0);
+                if (targetDeg <= 0) {
+                    targetDeg += 360.0;
+                }
+                targetDeg -= 180.0;
+                double targetRad = Math.toRadians(targetDeg);
+    // Use the Kalman-filtered pose from the swerve pose estimator for a
+    // reliable heading measurement.
+    double currentRad = swerveSubsystem.getPose().getRotation().getRadians();
+        double angleErrorRad = Math.abs(MathUtil.angleModulus(targetRad - currentRad));
+        double scheduleThresholdRad = Math.toRadians(3.0);
+        if (angleErrorRad > scheduleThresholdRad) {
+            if (alignCommand == null || !edu.wpi.first.wpilibj2.command.CommandScheduler.getInstance().isScheduled(alignCommand)) {
+                alignCommand = swerveSubsystem.alignRotationCmd(targetRad);
+                alignCommand.schedule();
+            }
+        }
 
         // turret.setGoal(turretShootAngle);
         // hood.setGoal(launchAngle);

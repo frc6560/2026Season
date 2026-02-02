@@ -72,7 +72,7 @@ public class RobotContainer {
     SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
       () -> driverXbox.getLeftY() * -1,
       () -> driverXbox.getLeftX() * -1)
-      .withControllerRotationAxis(() -> -driverXbox.getRightX())
+  .withControllerRotationAxis(() -> drivebase.isRotationOverridden() ? 0.0 : -driverXbox.getRightX())
       .deadband(OperatorConstants.DEADBAND)
       .scaleTranslation(0.8)
       .allianceRelativeControl(true);
@@ -112,7 +112,21 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-        Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
+        // Wrap the existing SwerveInputStream supplier so that when a rotation
+        // override is active we replace only the angular velocity while
+        // preserving the translational components. This avoids exclusive
+        // ownership of the drivetrain and prevents translation from locking out.
+        java.util.function.Supplier<ChassisSpeeds> driveWithOverride = () -> {
+          ChassisSpeeds speeds = driveAngularVelocity.get();
+          if (drivebase.isRotationOverridden()) {
+            return new ChassisSpeeds(speeds.vxMetersPerSecond,
+                                     speeds.vyMetersPerSecond,
+                                     drivebase.getRotationOverrideOmega());
+          }
+          return speeds;
+        };
+
+        Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveWithOverride);
         drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
         driverXbox.a().onTrue(
           Commands.defer(() -> {
