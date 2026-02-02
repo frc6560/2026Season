@@ -125,7 +125,7 @@ public class Flywheel extends SubsystemBase {
   }
 
   public double getCurrentRPM(){
-    double motorRPM = leftFlywheelMotor.getVelocity().getValueAsDouble(); 
+    double motorRPM = leftFlywheelMotor.getRotorVelocity().getValueAsDouble(); 
     return motorRPM / FlywheelConstants.FLYWHEEL_GEAR_RATIO;
   }
 
@@ -143,6 +143,7 @@ public class Flywheel extends SubsystemBase {
     // This method will be called once per scheduler run
     // Telemetry for AdvantageScope and SmartDashboard
     double currentRPM = getCurrentRPM();
+    SmartDashboard.putNumber("Flywheel RPM", currentRPM);
     // Compute PID output (percent) using RPM error, pidController tuned in constructor
     double output = pidController.calculate(currentRPM, targetRPM);
     // clamp output

@@ -1,5 +1,6 @@
 package frc.robot.subsystems.superstructure;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class ShooterLUT {
 
@@ -11,11 +12,11 @@ public class ShooterLUT {
     public ShooterLUT() {
 
         //distance (meters) to RPM
-        rpmMap.put(5.715, 2300.0);
-        rpmMap.put(4.953, 1800.0);
-        rpmMap.put(4.572, 1300.0);
-        rpmMap.put(4.191, 1000.0);
-        rpmMap.put(3.048, 800.0);
+        rpmMap.put(5.715, 2000.0);
+        rpmMap.put(4.953, 1500.0);
+        rpmMap.put(4.572, 1000.0);
+        rpmMap.put(4.191, 800.0);
+        rpmMap.put(3.048, 500.0);
 
         // distance (meters) to angle (degrees)
         angleMap.put(0.0, 45.0);

@@ -163,7 +163,7 @@ public class Snotm extends SubsystemBase {
         if (launchRPM > FlywheelConstants.FLYWHEEL_MAX_RPM) {
             flywheel.setRPM(FlywheelConstants.FLYWHEEL_MAX_RPM);
         } else {
-            flywheel.setRPM(launchRPM);
+            flywheel.setRPM(600);
         }
 
         turret.setGoal(launchAngle);

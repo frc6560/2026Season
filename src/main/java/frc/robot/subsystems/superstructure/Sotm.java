@@ -193,7 +193,8 @@ public class Sotm extends SubsystemBase {
         if (finalRPM > FlywheelConstants.FLYWHEEL_MAX_RPM) {
             flywheel.setRPM(FlywheelConstants.FLYWHEEL_MAX_RPM);
         } else {
-            flywheel.setRPM(finalRPM);
+            flywheel.setRPM(2500);
+
         }
 
     // Align drivetrain to computed turret shooting angle (use odometry-based pose estimator)
