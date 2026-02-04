@@ -134,6 +134,10 @@ public class Flywheel extends SubsystemBase {
     // This method will be called once per scheduler run
     double currentRPM = getCurrentRPM();
 
+    // Get individual motor velocities for detailed monitoring
+    double leftVelRPS = leftFlywheelMotor.getRotorVelocity().getValueAsDouble();
+    double rightVelRPS = rightFlywheelMotor.getRotorVelocity().getValueAsDouble();
+
     // Safety: stop motors if target is zero
     if (Math.abs(targetRPM) < 1e-3) {
       leftFlywheelMotor.stopMotor();
@@ -145,14 +149,31 @@ public class Flywheel extends SubsystemBase {
       // Use hardware velocity control (runs at 1kHz onboard)
       leftFlywheelMotor.setControl(velocityControl.withVelocity(targetMotorRPS));
       rightFlywheelMotor.setControl(velocityControl.withVelocity(targetMotorRPS));
+
+      // Log motor setpoint for verification
+      SmartDashboard.putNumber("Flywheel/Target Motor RPS", targetMotorRPS);
     }
 
-    // Telemetry
+    // Calculate error for easy plotting
+    double rpmError = targetRPM - currentRPM;
+
+    // Core telemetry
     SmartDashboard.putNumber("Flywheel/Current RPM", currentRPM);
     SmartDashboard.putNumber("Flywheel/Target RPM", targetRPM);
+    SmartDashboard.putNumber("Flywheel/RPM Error", rpmError);
     SmartDashboard.putBoolean("Flywheel/At Target", atTargetRPM());
+
+    // Individual motor monitoring
+    SmartDashboard.putNumber("Flywheel/Left Motor RPS", leftVelRPS);
+    SmartDashboard.putNumber("Flywheel/Right Motor RPS", rightVelRPS);
+    SmartDashboard.putNumber("Flywheel/Motor Velocity Diff", Math.abs(leftVelRPS - rightVelRPS));
+
+    // Electrical monitoring
     SmartDashboard.putNumber("Flywheel/Voltage", leftFlywheelMotor.getMotorVoltage().getValueAsDouble());
-    SmartDashboard.putNumber("Flywheel/Current Draw", leftFlywheelMotor.getSupplyCurrent().getValueAsDouble());
+    SmartDashboard.putNumber("Flywheel/Left Current", leftFlywheelMotor.getSupplyCurrent().getValueAsDouble());
+    SmartDashboard.putNumber("Flywheel/Right Current", rightFlywheelMotor.getSupplyCurrent().getValueAsDouble());
+    SmartDashboard.putNumber("Flywheel/Left Temp (C)", leftFlywheelMotor.getDeviceTemp().getValueAsDouble());
+    SmartDashboard.putNumber("Flywheel/Right Temp (C)", rightFlywheelMotor.getDeviceTemp().getValueAsDouble());
 
 }
 }
