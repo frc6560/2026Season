@@ -96,6 +96,13 @@ public class Flywheel extends SubsystemBase {
     targetRPM = rpm;
     // actual motor output will be computed in periodic using PID
   }
+
+  public void adjustRPM(double deltaRPM) {
+    targetRPM += deltaRPM;
+    // Clamp to reasonable values
+    targetRPM = Math.max(0, Math.min(targetRPM, FlywheelConstants.FLYWHEEL_MAX_RPM));
+    SmartDashboard.putNumber("Flywheel/Manual Target RPM", targetRPM);
+  }
   
   public void stop(){
     targetRPM = 0.0;

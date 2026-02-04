@@ -61,4 +61,17 @@ public class ManualControls {
     public boolean zeroNoAprilTagsGyro() {
       return secondXbox.getStartButton();
     }
+
+    // Flywheel manual control for calibration
+    public boolean increaseFlywheelSpeed() {
+      return secondXbox.getPOV() == 0; // D-Pad Up
+    }
+
+    public boolean decreaseFlywheelSpeed() {
+      return secondXbox.getPOV() == 180; // D-Pad Down
+    }
+
+    public boolean resetFlywheelSpeed() {
+      return secondXbox.getPOV() == 270; // D-Pad Left
+    }
 }
