@@ -97,6 +97,18 @@ public class ManualControls {
       return secondXbox.getStartButton();
     }
   
+    // flywheel
+    public boolean shootWithLimelight(){
+      return firstXbox.getRightBumperButton();
+    }
+
+    //hood
+    public boolean hoodManualUp(){
+      return firstXbox.getYButton();
+    }
+    public boolean hoodManualDown(){
+      return firstXbox.getAButton();
+    }
 
 
 

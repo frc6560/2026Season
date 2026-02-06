@@ -10,6 +10,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.vision.LimelightVision;
 import frc.robot.subsystems.vision.VisionSubsystem;
+import frc.robot.subsystems.Hood;
+import frc.robot.subsystems.ShotCalculator;
+import frc.robot.subsystems.Flywheel;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,9 +23,11 @@ import swervelib.SwerveInputStream;
 import edu.wpi.first.math.geometry.Pose3d;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.autonomous.AutoModeChooser;
-import frc.robot.autonomous.AutoCommands;
-import frc.robot.autonomous.AutoNames;
+import frc.robot.commands.FlywheelCommand;
+import frc.robot.commands.HoodCommand;
+// import frc.robot.autonomous.AutoModeChooser;
+// import frc.robot.autonomous.AutoCommands;
+// import frc.robot.autonomous.AutoNames;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 
 
@@ -33,6 +38,7 @@ public class RobotContainer {
     private final XboxController firstXbox = new XboxController(0);
     private final XboxController secondXbox = new XboxController(1);
     private final ManualControls controls = new ManualControls(firstXbox, secondXbox);
+    
 
      // The robot's subsystems and commands are defined here...
     private final SwerveSubsystem drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
@@ -40,10 +46,14 @@ public class RobotContainer {
     
     private final VisionSubsystem vision;
 
+     private final ShotCalculator shotCalc = new ShotCalculator(() -> drivebase.getPose());
+
     // Subsystems
 
-    private final AutoCommands factory;
-    private final AutoModeChooser autoChooser;
+   // private final AutoCommands factory;
+    //private final AutoModeChooser autoChooser;
+    private final Flywheel flywheel = new Flywheel(() -> drivebase.getPose()); 
+    private final Hood hood = new Hood(() -> drivebase.getPose());
 
     SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
       () -> driverXbox.getLeftY() * -1,
@@ -55,10 +65,13 @@ public class RobotContainer {
 
 
     public RobotContainer() {
-      factory = new AutoCommands(drivebase);
 
-      autoChooser = new AutoModeChooser(factory);
-      SmartDashboard.putData("Auto Chooser", autoChooser.getAutoChooser());
+        flywheel.setDefaultCommand(new FlywheelCommand(flywheel, shotCalc, controls));
+        hood.setDefaultCommand(new HoodCommand(hood, shotCalc, controls));
+     // factory = new AutoCommands(drivebase);
+
+      //autoChooser = new AutoModeChooser(factory);
+     // SmartDashboard.putData("Auto Chooser", autoChooser.getAutoChooser());
 
       List<LimelightVision> limelights = new ArrayList<LimelightVision>();
       for(String name : LimelightConstants.LIMELIGHT_NAMES) {
@@ -85,7 +98,7 @@ public class RobotContainer {
         driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
     }
 
-    public Command getAutonomousCommand() {
-      return autoChooser.getAutoChooser().selectedCommand();
-    }
+    // public Command getAutonomousCommand() {
+    //   return autoChooser.getAutoChooser().selectedCommand();
+    // }
 }
