@@ -14,27 +14,26 @@ public class HoodCommand extends Command {
   private final Hood Hood;
   private final ManualControls controls;
   private final double targetAngle;
+  private final ShotCalculator shotCalculator;
   /** Creates a new HoodCommand. */
-  public HoodCommand(Hood hood, ShotCalculator shotCalc, ManualControls controls2) {
-    this.Hood = hood;
-    this.controls = shotCalc;
-    this.targetAngle = controls2;
+  public HoodCommand(Hood hood, ShotCalculator shotCalculator, ManualControls controls) {
+    this.hood = hood;
+    this.shotCalculator = shotCalculator;
+    this.controls = controls;
     addRequirements(hood);
-    
-    // Use addRequirements() here to declare subsystem dependencies.
   }
 
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    Hood.setGoal(targetAngle);
+    hood.setGoal(targetAngle);
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
     if (controls.shootWithLimelight()) {
-      Hood.runWithPose(); 
+      Hood.setGoalFromCalculator(shotCalculator); 
     }
     else if (controls.hoodManualUp()) {
       Hood.manualUp();
