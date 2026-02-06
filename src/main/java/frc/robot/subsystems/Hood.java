@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.HoodConstants;
+import frc.robot.subsystems.ShotCalculator;
 
 public class Hood extends SubsystemBase {
 
@@ -62,7 +63,6 @@ public class Hood extends SubsystemBase {
     // Initialize hardware
     hoodMotor = new TalonFX(HoodConstants.HOOD_MOTOR_ID, "rio");
     absoluteEncoder = new DutyCycleEncoder(HoodConstants.HOOD_ABSOLUTE_ENCODER_ID);
-
     // Position control request
     positionControl = new PositionVoltage(0.0).withSlot(0);
 
@@ -239,20 +239,20 @@ public class Hood extends SubsystemBase {
    * Useful for verification and debugging
    */
   public double getAbsoluteAngle() {
-    // Get position from Through Bore Encoder (0-1 rotation)
-    double rawPosition = absoluteEncoder.get();
+    // FIX: Use getAbsolutePosition() (0.0 to 1.0) instead of get() (Relative Distance)
+    double rawPosition = absoluteEncoder.getAbsolutePosition(); 
     
-    // Apply offset and convert to degrees
+    // Apply offset (Must be between 0 and 1)
     double position = rawPosition - HoodConstants.HOOD_ABSOLUTE_ENCODER_OFFSET;
     
-    // Normalize to 0-1 range
+    // Normalize to 0-1 range (Handle wrap-around)
     position = position % 1.0;
     if (position < 0) position += 1.0;
     
     // Convert to degrees (0-360)
     double angleDeg = position * 360.0;
     
-    // Account for gear ratio if encoder is geared
+    // Account for external gearing if necessary
     angleDeg = angleDeg / HoodConstants.ABSOLUTE_HOOD_ENCODER_GEAR_RATIO;
     
     return angleDeg;
