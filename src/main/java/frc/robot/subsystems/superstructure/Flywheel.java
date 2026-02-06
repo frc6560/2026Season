@@ -73,6 +73,8 @@ public class Flywheel extends SubsystemBase {
     // Apply inversion
     if (inverted) {
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    } else {
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     }
 
 
