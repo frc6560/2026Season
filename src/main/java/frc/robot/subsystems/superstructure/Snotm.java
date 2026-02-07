@@ -47,7 +47,7 @@ public class Snotm extends SubsystemBase {
     private final Turret turret;
     private final ShooterLUT shooterLUT;
     private final Hood hood;
-    private final Feeder feeder;
+    public final Feeder feeder;
     private final GroundIntake intake;
 
     private final ManualControls controls;

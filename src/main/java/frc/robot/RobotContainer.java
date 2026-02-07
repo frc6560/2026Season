@@ -79,7 +79,7 @@ public class RobotContainer {
 
 
     public RobotContainer() {
-      snotm.setDefaultCommand(new SnotmCommand(snotm, controls, feeder));
+      snotm.setDefaultCommand(new SnotmCommand(snotm, controls, feeder,flywheel));
       feeder.setDefaultCommand(new FeederCommand(feeder, controls));
 
       factory = new AutoFactory(
