@@ -106,11 +106,11 @@ public final class Constants {
        public static final double MAX_RPM = 5000; // Example value for Falcon 500
     public static final double TARGET_RPM_HARDSET = 2000.0; 
     public static final double FLYWHEEL_GEAR_RATIO = 1.25; // TODO: set correct gear ratio
-    public static final double FLYWHEEL_IDLE_RPM = 25.0; //kraken x60 
+    public static final double FLYWHEEL_IDLE_RPM = 50.0; //kraken x60 
     public static final double FLYWHEEL_RPM_TOLERANCE = 100.0;
 
     /** Current Limits */
-    public static final double FLYWHEEL_SUPPLY_CURRENT_LIMIT = 40.0; // Amps
+    public static final double FLYWHEEL_SUPPLY_CURRENT_LIMIT = 60.0; // Amps
 
     /** Motor Inversion Settings */
     public static final boolean LEFT_FLYWHEEL_INVERTED = false; // TODO: Test and adjust
@@ -131,7 +131,7 @@ public final class Constants {
       // TODO: Fill in with actual measured values
     };
    
-    public static final int FLYWHEEL_STATOR_CURRENT_LIMIT = 0;
+    public static final int FLYWHEEL_STATOR_CURRENT_LIMIT = 80;
   }
 
   public static final class HoodConstants {

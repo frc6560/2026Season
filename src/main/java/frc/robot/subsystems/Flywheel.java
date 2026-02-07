@@ -115,6 +115,8 @@ public class Flywheel extends SubsystemBase {
         config.CurrentLimits.SupplyCurrentLimitEnable = FlywheelConstants.FLYWHEEL_SUPPLY_CURRENT_LIMIT > 0;
         config.CurrentLimits.SupplyCurrentLimit = FlywheelConstants.FLYWHEEL_SUPPLY_CURRENT_LIMIT;
 
+        config.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 0.5;
+
         // Apply configuration
         leaderMotor.getConfigurator().apply(config);
     }
@@ -133,6 +135,8 @@ public class Flywheel extends SubsystemBase {
         config.CurrentLimits.StatorCurrentLimit = FlywheelConstants.FLYWHEEL_STATOR_CURRENT_LIMIT;
         config.CurrentLimits.SupplyCurrentLimitEnable = FlywheelConstants.FLYWHEEL_SUPPLY_CURRENT_LIMIT > 0;
         config.CurrentLimits.SupplyCurrentLimit = FlywheelConstants.FLYWHEEL_SUPPLY_CURRENT_LIMIT;
+
+        config.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 0.5;
 
         // Apply configuration
         followerMotor.getConfigurator().apply(config);
@@ -163,7 +167,7 @@ public class Flywheel extends SubsystemBase {
     public void setRPM(double rpm) {
         targetRPM = rpm;
         // Convert to motor velocity accounting for gear ratio
-        double motorRPS = rpm / 60.0 / FlywheelConstants.FLYWHEEL_GEAR_RATIO;
+        double motorRPS = rpm / 60.0 * FlywheelConstants.FLYWHEEL_GEAR_RATIO;
 
         // Send command to leader motor only - follower automatically follows
         leaderMotor.setControl(velocityControl.withVelocity(motorRPS));
@@ -192,7 +196,7 @@ public class Flywheel extends SubsystemBase {
      */
     public double getCurrentRPM() {
         double motorRPS = leaderMotor.getVelocity().getValueAsDouble();
-        return motorRPS * 60.0 * FlywheelConstants.FLYWHEEL_GEAR_RATIO;
+        return motorRPS * 60.0 / FlywheelConstants.FLYWHEEL_GEAR_RATIO;
     }
 
     /**

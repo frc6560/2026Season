@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -15,9 +11,6 @@ public class HoodCommand extends Command {
   private final ManualControls controls;
   private final ShotCalculator shotCalc;
 
-  /** * Creates a new HoodCommand.
-   * Order matches RobotContainer: (Hood, ManualControls, ShotCalculator)
-   */
   public HoodCommand(Hood hood, ManualControls controls, ShotCalculator shotCalc) {
     this.hood = hood;
     this.controls = controls;
@@ -27,25 +20,28 @@ public class HoodCommand extends Command {
 
   @Override
   public void initialize() {
-    // Optional: Reset or set initial state
+    // SAFETY: Sync the software profile to the real hood angle.
+    // This prevents the hood from snapping if it fell while disabled.
+    hood.resetProfileToCurrent();
   }
 
   @Override
   public void execute() {
-    // 1. Check for Manual Overrides first
+    // 1. Update the Goal (Where do we want to go?)
     if (controls.hoodManualUp()) {
       hood.manualUp();
     }
     else if (controls.hoodManualDown()) {
       hood.manualDown();
     }
-    // 2. Check for Auto-Aim (Shooting)
-    // You likely have a button binding for this in ManualControls
     else if (controls.shootWithLimelight()) {
-      // Use the calculator to get the correct angle for the current distance
+      // Auto-Aim: Ask calculator for the perfect angle
       hood.setGoalFromCalculator(shotCalc);
     }
-    // 3. Otherwise, hold current position (automatic via internal PID)
+    
+    // 2. CRITICAL FIX: Actually run the control loop!
+    // Without this line, the motor will never get a signal.
+    hood.runControlLoop();
   }
 
   @Override
@@ -55,6 +51,6 @@ public class HoodCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    return false; // Default commands never finish
+    return false;
   }
 }

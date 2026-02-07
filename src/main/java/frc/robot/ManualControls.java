@@ -73,9 +73,9 @@ public class ManualControls {
     //     return secondXbox.getYButton();
     // }
 
-    public boolean shiftedControls(){
-      return secondXbox.getRightBumperButton();
-    }
+    // public boolean shiftedControls(){
+    //   return secondXbox.getRightBumperButton();
+    // }
 
     // public boolean goToGroundBall() {
     //   return secondXbox.getAButton();
