@@ -103,8 +103,8 @@ public class RobotContainer {
 
         // ✅ SIMULATION: idle only (10 RPM)
         if (RobotBase.isSimulation()) {
-            revolver.stopBoth();
-        }
+            revolver.requestStop();
+}
     }
 
     private void configureBindings() {
@@ -129,8 +129,7 @@ public class RobotContainer {
 
         // ================= REVOLVER =================
 
-        // Right Trigger: normal feed (state machine)
-        new Trigger(() -> secondXbox.getRightTriggerAxis() > 0.5)
+        new Trigger(secondXbox::getYButton)
             .onTrue(Commands.runOnce(revolver::requestFeed, revolver))
             .onFalse(Commands.runOnce(revolver::requestStop, revolver));
 

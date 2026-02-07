@@ -181,5 +181,4 @@ public class RevolverSubsystem extends SubsystemBase {
     public RevolverState getState() {
         return state;
     }
-}
-1
+} 
