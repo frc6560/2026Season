@@ -62,6 +62,11 @@ public class Turret extends SubsystemBase {
     private final NetworkTableEntry ntAngle = ntTable.getEntry("Angle");
     private final NetworkTableEntry ntPosition = ntTable.getEntry("Turret position");
     private final NetworkTableEntry ntTargetPos = ntTable.getEntry("Target angle");
+    private final NetworkTableEntry ntRawRotations = ntTable.getEntry("Raw Rotations");
+    private final NetworkTableEntry ntRequestedPosition = ntTable.getEntry("Requested Position");
+    private final NetworkTableEntry ntRequestedVelocity = ntTable.getEntry("Requested Velocity");
+    private final NetworkTableEntry ntTargetDeg = ntTable.getEntry("Target Deg");
+    private final NetworkTableEntry ntCurrentDeg = ntTable.getEntry("Current Deg");
 
     public Turret() {
         // Configure TalonFX
@@ -112,6 +117,14 @@ public class Turret extends SubsystemBase {
     }
 
     /**
+     * Return the raw motor rotations reported by the TalonFX encoder.
+     * This is the value the Talon APIs use for Position/Velocity control.
+     */
+    public double getRawEncoderRotations() {
+        return turretMotor.getPosition().getValueAsDouble();
+    }
+
+    /**
      * Reset the internal encoder to zero at the current position
      * Call this when the turret is in a known position (e.g., stow position)
      */
@@ -138,6 +151,14 @@ public class Turret extends SubsystemBase {
         turretMotor.set(0);
     }
 
+    /**
+     * Direct open-loop percent output (useful for testing)
+     * @param percent -1.0..1.0
+     */
+    public void setPercent(double percent) {
+        turretMotor.set(percent);
+    }
+
 
     @Override
     public void periodic() {
@@ -146,6 +167,8 @@ public class Turret extends SubsystemBase {
         // Update NetworkTables
         ntAngle.setDouble(angle);
         ntPosition.setDouble(angle);
+        ntCurrentDeg.setDouble(angle);
+        ntRawRotations.setDouble(getRawEncoderRotations());
 
         // Update SmartDashboard
         SmartDashboard.putNumber("Current Turret Angle", angle);
@@ -161,9 +184,17 @@ public class Turret extends SubsystemBase {
         double targetDeg = (targetState.position) * 360.0;
         double currentDeg = getTurretAngleDeg();
 
+        // Populate PositionVoltage request (positions here are in motor rotations as used by the TalonFX API).
         m_request.Position = targetState.position;
         m_request.Velocity = targetState.velocity;
         setSetpoint(targetState);
+
+        // Telemetry: publish the requested values so we can verify units/signs on the robot
+        ntRequestedPosition.setDouble(m_request.Position);
+        ntRequestedVelocity.setDouble(m_request.Velocity);
+        ntTargetDeg.setDouble(targetDeg);
+        ntCurrentDeg.setDouble(currentDeg);
+
         turretMotor.setControl(m_request);
     }
 

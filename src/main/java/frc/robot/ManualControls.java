@@ -88,6 +88,14 @@ public class ManualControls {
 
     // tests 
 
+    /**
+     * Manual turret axis (right stick X on the second controller). Returns a
+     * cleaned axis value suitable for open-loop percent commands.
+     */
+    public double getTurretManual() {
+      return modifyAxis(secondXbox.getRightX());
+    }
+
     // public double testWrist(){
     //   return deadband(secondXbox.getRightX(), 0.1);
     // }

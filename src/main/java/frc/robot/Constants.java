@@ -122,7 +122,7 @@ public final class Constants {
 
   public static final class TurretConstants {
     /** CAN IDs */
-    public static final int MOTOR_ID = 0;      // TODO: set correct ID
+    public static final int MOTOR_ID = 17;      // TODO: set correct ID
     public static final int ENCODER_ID = 0;    // TODO: set correct ID
 
     /** Characterization Gains */
