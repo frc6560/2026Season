@@ -18,8 +18,8 @@ public class RevolverVisualization {
     private double panAngleDeg = 0.0;
     private double pusherAngleDeg = 0.0;
 
-    private static final double PUSHER_OFFSET_DEG = 90.0; // separates arms
-    private static final double SCALE_FACTOR = 6.0;       // converts RPM to degrees per second
+    private static final double PUSHER_OFFSET_DEG = 90.0;
+    private static final double SCALE_FACTOR = 6.0; // RPM → deg/sec
 
     public RevolverVisualization(RevolverSubsystem revolver) {
         this.revolver = revolver;
@@ -36,28 +36,11 @@ public class RevolverVisualization {
     public void update() {
         double dt = 0.02; // 20 ms loop
 
-        // Only spin pan/pusher if not IDLE
-        switch (revolver.getState()) {
-            case IDLE:
-                // Keep angles static at current position
-                break;
+        double panRPM = revolver.getPanActualRPM();
+        double pusherRPM = revolver.getPusherActualRPM();
 
-            case SPINNING_UP:
-                panAngleDeg += revolver.getPanRPM() * SCALE_FACTOR * dt;
-                // pusher idle
-                break;
-
-            case FEEDING:
-            case OVERRIDE:
-                panAngleDeg += revolver.getPanRPM() * SCALE_FACTOR * dt;
-                pusherAngleDeg += revolver.getPusherRPM() * SCALE_FACTOR * dt;
-                break;
-
-            case STAGED:
-                panAngleDeg += revolver.getPanRPM() * SCALE_FACTOR * dt;
-                // pusher stopped
-                break;
-        }
+        panAngleDeg += panRPM * SCALE_FACTOR * dt;
+        pusherAngleDeg += pusherRPM * SCALE_FACTOR * dt;
 
         panAngleDeg %= 360.0;
         pusherAngleDeg %= 360.0;
