@@ -67,7 +67,8 @@ public class RobotContainer {
     public RobotContainer() {
 
         flywheel.setDefaultCommand(new FlywheelCommand(flywheel, shotCalc, controls));
-        hood.setDefaultCommand(new HoodCommand(hood, shotCalc, controls));
+
+        hood.setDefaultCommand(new HoodCommand(hood, controls, shotCalc));
      // factory = new AutoCommands(drivebase);
 
       //autoChooser = new AutoModeChooser(factory);

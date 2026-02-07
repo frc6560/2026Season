@@ -14,25 +14,32 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
-
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj.DutyCycle;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
-
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.FlywheelConstants;
 import frc.robot.Constants.HoodConstants;
-import frc.robot.subsystems.ShotCalculator;
 
 public class Hood extends SubsystemBase {
 
   // Hardware
   private final TalonFX hoodMotor;
-  private final DutyCycleEncoder absoluteEncoder;
+  private final CANcoder absoluteEncoder;
+
+  // Mechanism2d visualization
+  private final Mechanism2d hoodMech;
+  private final MechanismRoot2d hoodRoot;
+  private final MechanismLigament2d hoodArm;
 
   // Control
   private final PositionVoltage positionControl;
@@ -60,9 +67,10 @@ public class Hood extends SubsystemBase {
   public Hood(PoseSupplier poseSupplier) {
     this.isSimulation = RobotBase.isSimulation();
 
-    // Initialize hardware
-    hoodMotor = new TalonFX(HoodConstants.HOOD_MOTOR_ID, "rio");
-    absoluteEncoder = new DutyCycleEncoder(HoodConstants.HOOD_ABSOLUTE_ENCODER_ID);
+    // Initialize hardware (Removed "rio" to fix deprecation warnings)
+    hoodMotor = new TalonFX(HoodConstants.HOOD_MOTOR_ID);
+    absoluteEncoder = new CANcoder(HoodConstants.HOOD_ABSOLUTE_ENCODER_ID);
+
     // Position control request
     positionControl = new PositionVoltage(0.0).withSlot(0);
 
@@ -79,30 +87,38 @@ public class Hood extends SubsystemBase {
     configureAbsoluteEncoder();
     configureMotor();
 
+    // Initialize Visualization
+    hoodMech = new Mechanism2d(200, 200);
+    hoodRoot = hoodMech.getRoot("Hood Root", 100, 100);
+    hoodArm = hoodRoot.append(new MechanismLigament2d("Hood Arm", 50, 0));
+    hoodArm.setColor(new Color8Bit(255, 165, 0));
+    SmartDashboard.putData("Hood Mechanism", hoodMech);
+
     if (isSimulation) {
       System.out.println("Hood initialized in SIMULATION mode");
     }
   }
 
   /**
-   * Configures the absolute encoder (DutyCycleEncoder)
+   * Configures the absolute encoder (CANcoder)
    */
   private void configureAbsoluteEncoder() {
-    // DutyCycleEncoder reports rotations as a fraction [0,1) for one physical rotation.
-    // Treat one full encoder rotation as 1.0 distance unit so getAbsolutePosition() * 360 gives degrees.
-    absoluteEncoder.setDistancePerRotation(360.0);
-    //absoluteEncoder.reset(); // or other config calls that your encoder supports
-
-    // If you later switch to a CTRE CANcoder, apply a CANcoderConfiguration via the CANcoder API.
+    CANcoderConfiguration config = new CANcoderConfiguration();
+    
+    // Set sensor direction
+    config.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
+    config.MagnetSensor.MagnetOffset = 0.0; // Will be set during calibration
+    
+    absoluteEncoder.getConfigurator().apply(config);
   }
 
   /**
-   * Configures the hood motor with inversion set once
+   * Configures the hood motor
    */
   private void configureMotor() {
     TalonFXConfiguration config = new TalonFXConfiguration();
     
-    // PID and feedforward gains for position control
+    // PID and feedforward gains
     Slot0Configs slot0 = config.Slot0;
     slot0.kS = HoodConstants.kS;
     slot0.kV = HoodConstants.kV;
@@ -111,71 +127,46 @@ public class Hood extends SubsystemBase {
     slot0.kI = HoodConstants.kI;
     slot0.kD = HoodConstants.kD;
 
-    // Set motor inversion ONCE in configuration
+    // Motor Inversion
     config.MotorOutput.Inverted = HoodConstants.HOOD_MOTOR_INVERTED 
       ? InvertedValue.Clockwise_Positive 
       : InvertedValue.CounterClockwise_Positive;
 
-    // Set neutral mode to brake
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     // Current limits
     config.CurrentLimits.SupplyCurrentLimit = HoodConstants.HOOD_CURRENT_LIMIT;
     config.CurrentLimits.SupplyCurrentLimitEnable = HoodConstants.HOOD_CURRENT_LIMIT > 0;
 
-    // Gear ratios
+    // --- GEARING CONFIGURATION ---
+    
     config.Feedback.SensorToMechanismRatio = 2 * (HoodConstants.ABSOLUTE_HOOD_ENCODER_GEAR_RATIO);
     config.Feedback.RotorToSensorRatio = (44.0/9.0); 
 
-     //soft limits
+    // Soft limits (Converted to Rotations: Degrees / 360)
     config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 37.0 / 360.0 * HoodConstants.HOOD_GEAR_RATIO; //37 degrees
+    config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 37.0 / 360.0; 
     config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true; 
-    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0 / 360.0; //0 degrees
+    config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0 / 360.0; 
 
-    // Apply configuration
     hoodMotor.getConfigurator().apply(config.withSlot0(slot0));
   }
 
   /**
-   * Calculates distance from robot to target hub
-   */
-  private double getDistanceToTarget() {
-    // This method is no longer used - ShotCalculator handles this
-    // Kept for backwards compatibility if needed
-    return 0.0;
-  }
-
-  /**
-   * Gets the hub position based on alliance color
-   */
-  private Translation2d getHubPose() {
-    // This method is no longer used - ShotCalculator handles this
-    // Kept for backwards compatibility if needed
-    return new Translation2d();
-  }
-
-
-  /**
    * Set hood goal based on ShotCalculator output
-   * @param calculator The ShotCalculator instance
    */
   public void setGoalFromCalculator(ShotCalculator calculator) {
     setGoal(calculator.getHoodAngle());
   }
-   public void manualUp() {
-    // 0.5 degrees per 20ms = 25 degrees per second
-    double nextAngle = getGoalValue() + 0.5;
-    setGoal(nextAngle);
+
+  public void manualUp() {
+    // 0.5 degrees per loop
+    setGoal(getGoalValue() + 0.5);
   }
 
-  /**
-   * Manually decreases the hood angle setpoint.
-   */
   public void manualDown() {
-    // 0.5 degrees per 20ms = 25 degrees per second
-    double nextAngle = getGoalValue() - 0.5;
-    setGoal(nextAngle);
+    // 0.5 degrees per loop
+    setGoal(getGoalValue() - 0.5);
   }
 
   /**
@@ -183,45 +174,25 @@ public class Hood extends SubsystemBase {
    * @param goalDeg Target angle in degrees
    */
   public void setGoal(double goalDeg) {
-    // Normalize angle to 0-360
-    goalDeg = ((goalDeg % 360) + 360) % 360;
-    targetAngle = goalDeg;
+    double clampedGoal = MathUtil.clamp(
+        goalDeg, 
+        HoodConstants.HOOD_MIN_ANGLE, 
+        HoodConstants.HOOD_MAX_ANGLE
+    );
+    targetAngle = clampedGoal;
     
-    // Convert degrees to rotations for the profile
-    hoodGoalState = new TrapezoidProfile.State(goalDeg / 360.0, 0);
+    // Convert degrees to rotations (0.0 - 1.0)
+    hoodGoalState = new TrapezoidProfile.State(clampedGoal / 360.0, 0);
   }
 
-  /**
-   * Get the current goal state
-   */
-  public TrapezoidProfile.State getGoal() {
-    return hoodGoalState;
-  }
-
-  /**
-   * Get the goal angle in degrees
-   */
   public double getGoalValue() {
     return hoodGoalState.position * 360.0;
   }
 
-  /**
-   * Set the current setpoint state
-   */
   public void setSetpoint(TrapezoidProfile.State nextSetpoint) {
     hoodSetpointState = nextSetpoint;
   }
 
-  /**
-   * Get the current setpoint state
-   */
-  public TrapezoidProfile.State getSetpoint() {
-    return hoodSetpointState;
-  }
-
-  /**
-   * Stop hood movement
-   */
   public void stop() {
     hoodMotor.stopMotor();
   }
@@ -230,159 +201,81 @@ public class Hood extends SubsystemBase {
    * Returns current hood angle from motor encoder (degrees)
    */
   public double getCurrentAngle() {
-    double motorRotations = hoodMotor.getPosition().getValueAsDouble();
-    return motorRotations * 360.0 / HoodConstants.HOOD_GEAR_RATIO;
+    // Phoenix 6 returns "Mechanism Rotations" because we set SensorToMechanismRatio.
+    // So we just multiply by 360 to get degrees.
+    return hoodMotor.getPosition().getValueAsDouble() * 360.0;
   }
 
   /**
    * Returns current hood angle from absolute encoder (degrees)
-   * Useful for verification and debugging
    */
   public double getAbsoluteAngle() {
-    // FIX: Use getAbsolutePosition() (0.0 to 1.0) instead of get() (Relative Distance)
-    double rawPosition = absoluteEncoder.getAbsolutePosition(); 
-    
-    // Apply offset (Must be between 0 and 1)
-    double position = rawPosition - HoodConstants.HOOD_ABSOLUTE_ENCODER_OFFSET;
-    
-    // Normalize to 0-1 range (Handle wrap-around)
-    position = position % 1.0;
-    if (position < 0) position += 1.0;
-    
-    // Convert to degrees (0-360)
-    double angleDeg = position * 360.0;
-    
-    // Account for external gearing if necessary
-    angleDeg = angleDeg / HoodConstants.ABSOLUTE_HOOD_ENCODER_GEAR_RATIO;
-    
-    return angleDeg;
+    // CANcoder returns rotations (0-1).
+    return absoluteEncoder.getAbsolutePosition().getValueAsDouble() * 360.0;
   }
 
-
-  /**
-   * Returns target angle (degrees)
-   */
-  public double getTargetAngle() {
-    return targetAngle;
-  }
-
-  /**
-   * Returns distance to target (for telemetry)
-   * @deprecated Use ShotCalculator.getDistance() instead
-   */
-  @Deprecated
-  public double getDistance() {
-    return getDistanceToTarget();
-  }
-
-  /**
-   * Check if hood is at target position
-   */
   public boolean atTarget(double tolerance) {
     return Math.abs(getCurrentAngle() - targetAngle) < tolerance;
   }
 
   /**
-   * Reset the internal encoder to zero at the current position
-   */
-  public void resetEncoder() {
-    hoodMotor.setPosition(0);
-  }
-
-  /** 
-   * Reset encoder and set it to a specific angle
-   * @param currentAngleDeg The actual current angle of the hood in degrees
+   * Reset encoder to a specific angle
    */
   public void resetEncoderToAngle(double currentAngleDeg) {
-    // Convert degrees to mechanism rotations (SensorToMechanismRatio handles motor conversion)
+    // Convert degrees to mechanism rotations
     double mechanismRotations = currentAngleDeg / 360.0;
     hoodMotor.setPosition(mechanismRotations);
   }
 
-  /**
-   * Execute the trapezoidal motion profile control
-   */
   private void setControl() {
-    // Calculate the next state using trapezoidal profile
     TrapezoidProfile.State targetState = hoodTrapezoidProfile.calculate(
-      0.02, // 20ms period
+      0.02, 
       hoodSetpointState,
       hoodGoalState
     );
 
-    // targetState.position is already in mechanism rotations (0-1 = 0-360°)
-    // No need to multiply by gear ratio - SensorToMechanismRatio handles it
-    double targetRotations = targetState.position;
-    double targetVelocity = targetState.velocity;
-
-    // Update setpoint
     setSetpoint(targetState);
 
-    // Apply position control with velocity feedforward
-    positionControl.Position = targetRotations;
-    positionControl.Velocity = targetVelocity;
+    // Because we configured SensorToMechanismRatio in configureMotor(),
+    // we pass 'targetState.position' directly (it is already in mechanism rotations).
+    // DO NOT multiply by gear ratio here.
+    positionControl.Position = targetState.position;
+    positionControl.Velocity = targetState.velocity;
     hoodMotor.setControl(positionControl);
   }
 
   @Override
   public void periodic() {
+    setControl();
+
+    // Telemetry
     double currentAngle = getCurrentAngle();
     double absoluteAngle = getAbsoluteAngle();
 
-    // Update simulation if in sim mode
-    if (isSimulation) {
-      simulationPeriodic();
-    }
-
-    // Execute motion profile control
-    setControl();
-
-    // Update SmartDashboard
     SmartDashboard.putNumber("Hood/Current Angle (Motor)", currentAngle);
     SmartDashboard.putNumber("Hood/Absolute Angle (Encoder)", absoluteAngle);
     SmartDashboard.putNumber("Hood/Target Angle", targetAngle);
     SmartDashboard.putNumber("Hood/Goal Angle", getGoalValue());
-    SmartDashboard.putNumber("Hood/Angle Error", targetAngle - currentAngle);
     SmartDashboard.putBoolean("Hood/At Target", atTarget(1.0));
-    SmartDashboard.putBoolean("Hood/Is Simulation", isSimulation);
+
+    // Update Visualization 
+    hoodArm.setAngle(currentAngle);
 
     // Motor debugging info
-    SmartDashboard.putNumber("Hood/Motor Position (rotations)", hoodMotor.getPosition().getValueAsDouble());
-    SmartDashboard.putNumber("Hood/Motor Velocity (rps)", hoodMotor.getVelocity().getValueAsDouble());
     SmartDashboard.putNumber("Hood/Motor Voltage (V)", hoodMotor.getMotorVoltage().getValueAsDouble());
-
-    // Profile state telemetry
-    SmartDashboard.putNumber("Hood/Setpoint Position", hoodSetpointState.position * 360.0);
-    SmartDashboard.putNumber("Hood/Setpoint Velocity", hoodSetpointState.velocity * 360.0);
-
-    // Check encoder discrepancy
-    double encoderDiscrepancy = Math.abs(currentAngle - absoluteAngle);
-    SmartDashboard.putNumber("Hood/Encoder Discrepancy", encoderDiscrepancy);
-    SmartDashboard.putBoolean("Hood/Needs Rehome", encoderDiscrepancy > 5.0);
+    SmartDashboard.putNumber("Hood/Encoder Discrepancy", Math.abs(currentAngle - absoluteAngle));
   }
 
-  /**
-   * Simple simulation - just tracks the setpoint position
-   */
   @Override
   public void simulationPeriodic() {
-    // With SensorToMechanismRatio, sim position is in mechanism rotations
-    simPosition = hoodSetpointState.position; // Already in mechanism rotations
-    simVelocity = hoodSetpointState.velocity; // Already in mechanism rotations/sec
-
-    // Debug output
-    if (Math.random() < 0.02) { // Print ~once per second
-      System.out.println(String.format("SIM: Goal=%.1f° Current=%.1f° SetpointPos=%.3f",
-        getGoalValue(), getCurrentAngle(), hoodSetpointState.position));
-    }
-
-    // Feed simulated values back to the motor (in mechanism rotations)
-    hoodMotor.getSimState().setRawRotorPosition(simPosition);
-    hoodMotor.getSimState().setRotorVelocity(simVelocity);
-
-    // Update CANcoder (which has different gearing: 18:44 = 2.44:1)
-    double absPosition = (simPosition * HoodConstants.ABSOLUTE_HOOD_ENCODER_GEAR_RATIO) % 1.0;
-    if (absPosition < 0) absPosition += 1.0;
-   // absoluteEncoder.getSimState().setRawPosition(absPosition);
+    simPosition = hoodSetpointState.position; 
+    simVelocity = hoodSetpointState.velocity; 
+    
+    // Sim state expects Rotor Rotations, so we must multiply back by Gear Ratio here
+    hoodMotor.getSimState().setRawRotorPosition(simPosition * HoodConstants.HOOD_GEAR_RATIO);
+    hoodMotor.getSimState().setRotorVelocity(simVelocity * HoodConstants.HOOD_GEAR_RATIO);
+    
+    // Update CANcoder sim
+    absoluteEncoder.getSimState().setRawPosition(simPosition);
   }
 }
