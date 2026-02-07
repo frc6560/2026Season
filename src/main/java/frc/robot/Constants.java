@@ -6,14 +6,17 @@ package frc.robot;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DigitalSource;
 import swervelib.math.Matter;
 
 /**
@@ -52,10 +55,15 @@ public final class Constants {
   public static final class FieldConstants{
     // public static final Pose2d START = new Pose2d(3.152, 4.018, Rotation2d.fromDegrees(-90));
     public static final Pose2d TARGET_POSE = new Pose2d(3.650, 4.010, Rotation2d.fromDegrees(0));
+    public static final Pose2d HUB_BLUE_POSITION = new Pose2d(4.03,8.07/2, new Rotation2d(0));
+    public static final Pose2d HUB_RED_POSITION = new Pose2d(16.54-4.03,8.07/2, new Rotation2d(0));
+    public static final Pose2d PASS_BLUE_POSITION = new Pose2d(-1.5,8.07/2, new Rotation2d(0));
+    public static final Pose2d PASS_RED_POSITION = new Pose2d(16.54+1.5,8.07/2, new Rotation2d(0));
   }
 
   public static class OperatorConstants
   {
+
     // Joystick Deadband
     public static final double DEADBAND = 0.1;
     public static final double LEFT_Y_DEADBAND = 0.1;
@@ -69,6 +77,7 @@ public final class Constants {
       "limelight"
     }; // one limelight for now
 
+    
     public static Pose3d getLimelightPose(String name){
       Pose3d limelightPose;
       switch(name){
@@ -77,7 +86,7 @@ public final class Constants {
             0.394,
             -0.0248,
             0.192,
-            new Rotation3d(0, Units.degreesToRadians(40), 0)
+            new Rotation3d(0, 40, 0)
           );
           break;
         default:
@@ -85,230 +94,122 @@ public final class Constants {
       }
       return limelightPose;
     }
-    public static final double kStdvXYBase = 0.15;
-    public static final double kStdvThetaBase = 1.0;
-    public static final double JUMP_TOLERANCE = 0.6; // meters
+    public static final double kStdvXYBase = 0.3; // No idea how to tune these base values.
+    public static final double kStdvThetaBase = 1.0; // See above
+    public static final double JUMP_TOLERANCE = 0.5; // meters. again, needs tuning.
   }
 
   public static final class FlywheelConstants {
+    public static final int RIGHT_FLYWHEEL_ID = 21; // TODO: set correct ID
+    public static final int LEFT_FLYWHEEL_ID = 20; // TODO: set correct ID
+
+    
+    public static final double kV = 0.0; // TODO: tune
+    public static final double kP = 1.3; // TODO: tune
+    public static final double kI = 0.01; // TODO: tune
+    public static final double kD = 0.2; // TODO: tune
+
+    public static final double FLYWHEEL_GEAR_RATIO = 2 / 1; // TODO: this is a reduction, 2 rotations of motor is 1 rotation flywheel
+    public static final double FLYWHEEL_IDLE_RPM = 600.0; //kraken x60 
+    public static final double FLYWHEEL_RPM_TOLERANCE = 100.0;
+    public static final double FLYWHEEL_MAX_RPM = 3200.0;
+
+    public static final double FLYWHEEL_SUPPLY_CURRENT_LIMIT = 0;
+
+    public static final Slot0Configs FLYWHEEL_PID_CONFIG = null;
+
+  }
+
+  public static final class TurretConstants {
     /** CAN IDs */
-    public static final int LEFT_FLYWHEEL_ID = 19;
-    public static final int RIGHT_FLYWHEEL_ID = 20;
+    public static final int MOTOR_ID = 0;      // TODO: set correct ID
+    public static final int ENCODER_ID = 0;    // TODO: set correct ID
+
+    /** Characterization Gains */
+    public static final double kS = 0.1;
+    public static final double kV = 0.2;
+    public static final double kA = 0.01;
+    public static final double kG = 0.0;
 
     /** PID Gains */
-    public static final double kP = 0.2;
-    public static final double kI = 0.0;
-    public static final double kD = 0.0;
-    public static final double kV = 0.12; // TODO: tune
-     public static final double kS = 0.25;
+    public static final double kP = 5;
+    public static final double kI = 0.01;
+    public static final double kD = 0.2;
 
-    /** Flywheel Geometry */
-       public static final double MAX_RPM = 5000; // Example value for Falcon 500
-    public static final double TARGET_RPM_HARDSET = 2000.0; 
-    public static final double FLYWHEEL_GEAR_RATIO = 1.25; // TODO: set correct gear ratio
-    public static final double FLYWHEEL_IDLE_RPM = 25.0; //kraken x60 
-    public static final double FLYWHEEL_RPM_TOLERANCE = 100.0;
+    /** Motion Constraints */
+    public static final double kMaxV = 35; // m/s
+    public static final double kMaxA = 45; // m/s^2
 
-    /** Current Limits */
-    public static final double FLYWHEEL_SUPPLY_CURRENT_LIMIT = 40.0; // Amps
+    /** Turret Geometry */
+    public static final double MOTOR_GEAR_RATIO = 1; // Motor reduction ratio
+    public static final double ENCODER_GEAR_RATIO = 1; // Encoder reduction ratio
+    
 
-    /** Motor Inversion Settings */
-    public static final boolean LEFT_FLYWHEEL_INVERTED = false; // TODO: Test and adjust
-    public static final boolean RIGHT_FLYWHEEL_OPPOSED = true; // Opposite of leader
-
-    /** Hub Positions (used by ShotCalculator) */
-    public static final Translation2d HUB_BLUE_POSITION = new Translation2d(4.03, 8.07/2);
-    public static final Translation2d HUB_RED_POSITION = new Translation2d(16.54-4.03, 8.07/2);
-
-    /** Distance to RPM Lookup Table */
-    public static final double[][] DISTANCE_RPM_TABLE = {
-      {0.0, 1000.0},
-      {1.0, 1200.0},
-      {2.0, 1400.0},
-      {3.0, 1600.0},
-      {4.0, 1800.0},
-      {5.0, 2000.0}
-      // TODO: Fill in with actual measured values
-    };
-   
-    public static final int FLYWHEEL_STATOR_CURRENT_LIMIT = 0;
+  // Absolute encoder setup
+  public static final int ABS_ENCODER_DIO_PORT = 0;   // change to your wiring
+  public static final double ABS_ENCODER_OFFSET_DEG = 0.0; // tune so stow = 0°
+  public static final boolean ABS_ENCODER_REVERSED = false; 
   }
 
   public static final class HoodConstants {
     /** CAN IDs */
-    public static final int HOOD_MOTOR_ID = 21;
+    public static final int MOTOR_ID = 0;      // TODO: set correct ID
+    public static final int ENCODER_ID = 0;    // TODO: set correct ID
 
-    /** Feedforward Gains (for TalonFX Slot0) */
-    public static final double kS = 0.2;   // Static friction voltage
-    public static final double kV = 0.12;  // Velocity feedforward
-    public static final double kA = 0.0;   // Acceleration feedforward
-
-    /** PID Gains */
-    public static final double kP = 0.5;   // Proportional gain
-    public static final double kI = 0.0;   // Integral gain
-    public static final double kD = 0.0;   // Derivative gain
-
-    /** Motion Profile Constraints */
-    public static final double kMaxV = 360.0;  // Max velocity (degrees/second)
-    public static final double kMaxA = 720.0;  // Max acceleration (degrees/second²)
-
-    /** Hood Geometry */
-    public static final double HOOD_GEAR_RATIO = 40.0; // 40:1 total gear reduction
-    public static final double ABSOLUTE_HOOD_ENCODER_GEAR_RATIO = 44.0 / 18.0; // 2.44:1
-
-    /** Motor Inversion */
-    public static final boolean HOOD_MOTOR_INVERTED = false; // TODO: Test and adjust
-
-    /** Current Limits */
-    public static final double HOOD_CURRENT_LIMIT = 30.0; // Amps
-
-    /** Hood Angle Limits */
-    public static final double HOOD_MIN_ANGLE = 0.0;   // degrees
-    public static final double HOOD_MAX_ANGLE = 37.0;  // degrees
-
-    /** Distance to Angle Lookup Table */
-    public static final double[][] DISTANCE_ANGLE_TABLE = {
-      {0.0, 10.0},
-      {1.0, 15.0},
-      {2.0, 20.0},
-      {3.0, 25.0},
-      {4.0, 30.0},
-      {5.0, 35.0}
-      // TODO: Fill in with actual measured values
-    };
-
-    public static final int HOOD_ABSOLUTE_ENCODER_ID = 22;
-
-    public static final double HOOD_ABSOLUTE_ENCODER_OFFSET = 0;
-  }
-
-  public static final class ElevatorConstants {
-    /** CAN IDs */
-    public static int ElevLeftCanID = 15;
-    public static int ElevRightCanID = 16;
-    
-    /** Limit Switches */
-    public static final int TopLimitSwitchID = 3;
-    public static final int BotLimitSwitchID = 4;
-
-    /** Feedforward Gains */
-    public static final double kS = 0;
-    public static final double kV = 0;
-    public static final double kA = 0;
-    public static final double kG = 0.4;
-
-    /** PID Gains */
-    public static final double kP = 3.5;
-    public static final double kI = 0.1;
-    public static final double kD = 0.1;
-
-    /** Motion Constraints */
-    public static final double kMaxV = 30;
-    public static final double kMaxA = 23;
-
-    /** Elevator Geometry */
-    public static final double NumInPerRot = 13.4962820398;
-    public static final double WristHeightOffGround = 17;
-
-    /** Helper Method */
-    public static double HeightToRotations(double TargetHeight) {
-      return ((TargetHeight - WristHeightOffGround) / NumInPerRot);
-    }
-
-    /** Elevator States */
-    public static enum ElevState {
-      L2BALL(HeightToRotations(32 + 8.125)),
-      L3BALL(HeightToRotations(47.625 + 8.125)),
-      SHOOTBALL(HeightToRotations(76 + 8.125)),
-      STOW(HeightToRotations(18)),
-      GROUNDBALL(HeightToRotations(20));
-
-      public final double elevatorSetPoint;
-      
-      private ElevState(double elevatorSetpoint) {
-        this.elevatorSetPoint = elevatorSetpoint;
-      }
-
-      public double getValue() {
-        return elevatorSetPoint;
-      }
-    }
-
-    /** Position Constants */
-    public static final double L2 = 5;
-    public static final double L3 = 10;
-    public static final double L4 = 15;
-    public static final double REMOVEBALLL2 = 0.2;
-    public static final double REMOVEBALLL3 = 14;
-    public static final double SHOOTBALL = 20.22;
-    public static final double L2BALL = 1.8;
-    public static final double L3BALL = 6.7;
-    public static final double STOW = 0.2;
-    public static final double GROUNDBALL = 0.2;
-  }
-
-  public static final class ArmConstants {
-    /** CAN IDs */
-    public static final int MOTOR_ID = 40;
-    public static final int ENCODER_ID = 0;
-
-    /** Feedforward Gains */
+    /** Characterization Gains */
     public static final double kS = 0.1;
-    public static final double kV = 0.0;
-    public static final double kA = 0.0;
+    public static final double kV = 0.2;
+    public static final double kA = 0.01;
     public static final double kG = 0.0;
 
     /** PID Gains */
-    public static final double kP = 4.0;
+    public static final double kP = 0.7;
     public static final double kI = 0.0;
-    public static final double kD = 0.0;
+    public static final double kD = 0.01;
 
     /** Motion Constraints */
-    public static final double kMaxV = 128000; // degrees/s
-    public static final double kMaxA = 128000; // degrees/s²
+    public static final double kMaxV = 3; // m/s
+    public static final double kMaxA = 2; // m/s^2
 
-    /** Arm Geometry */
-    public static final double MOTOR_GEAR_RATIO = 108.0;
-    public static final double ENCODER_GEAR_RATIO = 81.0;
-    public static final double ARM_LENGTH_METERS = 0.5; // TODO: measure
-    public static final double ARM_MASS_KG = 5.0;       // TODO: measure
-    public static final double MAX_ANGLE_DEG = 0.0;
-    public static final double MIN_ANGLE_DEG = -70.0;
+    /** Turret Geometry */
+    public static final double MOTOR_GEAR_RATIO = 1; // Motor reduction ratio
+    public static final double ENCODER_GEAR_RATIO = 1; // Encoder reduction ratio
+    
 
-    /** Gravity Constant */
-    public static final double GRAVITY = 9.81; // m/s²
-
-    /** Arm Setpoints (Degrees) */
-    public static final double STOW_POSITION_DEG = -8.0;
-    public static final double PICKUP_POSITION_DEG = -95.0;
-    public static final double REEF_POSITION_DEG_low = -19.0;
-    public static final double REEF_POSITION_DEG_high = -19.0;
-    public static final double BARGE = -8.0;
-    public static final double PROCESSOR_DEG = 0.0;
-
-    /** Absolute Encoder Setup */
-    public static final int ABS_ENCODER_DIO_PORT = 0;
-    public static final double ABS_ENCODER_OFFSET_DEG = 0.0;
-    public static final boolean ABS_ENCODER_REVERSED = false;
-
-    /** Arm Setpoints (Radians) */
-    public static final double STOW_POSITION_RAD = Math.toRadians(STOW_POSITION_DEG);
-    public static final double PICKUP_POSITION_RAD = Math.toRadians(PICKUP_POSITION_DEG);
-    public static final double REEF_POSITION_RAD_high = Math.toRadians(REEF_POSITION_DEG_high);
-    public static final double REEF_POSITION_RAD_low = Math.toRadians(REEF_POSITION_DEG_low);
-
-    /** Arm State Enum */
-    public enum ArmState {
-      STOW(STOW_POSITION_DEG),
-      PICKUP(PICKUP_POSITION_DEG),
-      REEF_high(REEF_POSITION_DEG_high),
-      REEF_low(REEF_POSITION_DEG_low);
-
-      public final double angleDeg;
-
-      ArmState(double angleDeg) {
-        this.angleDeg = angleDeg;
-      }
-    }
+  // Absolute encoder setup
+  public static final int ABS_ENCODER_DIO_PORT = 0;   // change to your wiring
+  public static final double ABS_ENCODER_OFFSET_DEG = 0.0; // tune so stow = 0°
+  public static final boolean ABS_ENCODER_REVERSED = false; 
   }
+
+  public static final class FeederConstants {
+    public static final int MOTOR_ID = 22; // TODO: set correct ID
+  }
+
+  public static final class GroundIntakeConstants {
+    // CAN IDs
+    public static final int EXTENSION_MOTOR_ID = 20; // TODO: Set correct CAN ID
+    public static final int ROLLER_MOTOR_ID = 21;    // TODO: Set correct CAN ID
+    
+    public static final int RETRACT_LIMIT_SWITCH_ID = 5; // TODO: Set correct
+    
+    // Current Limits (in Amps)
+    public static final double EXTENSION_NORMAL_CURRENT_LIMIT = 40.0;
+    public static final double EXTENSION_SPRINGY_CURRENT_LIMIT = 10.0; // Reduced for springy mode
+    public static final double ROLLER_CURRENT_LIMIT = 30.0;
+    
+    // Motor Speeds (as percentage: -1.0 to 1.0)
+    public static final double EXTENSION_OUT_SPEED = 0.6;
+    public static final double EXTENSION_IN_SPEED = -0.6;
+    public static final double ROLLER_INTAKE_SPEED = 0.8;
+    public static final double ROLLER_OUTTAKE_SPEED = -0.5;
+    
+    // Motor Inversions
+    public static final boolean EXTENSION_MOTOR_INVERTED = false; // TODO: Test and adjust
+    public static final boolean ROLLER_MOTOR_INVERTED = false;    // TODO: Test and adjust
+    
+    // Extension Thresholds
+    public static final double EXTENSION_THRESHOLD = 0.5; // Motor output threshold to consider "fully extended"
+  }
+  
 }

@@ -60,26 +60,6 @@ public class ManualControls {
     public boolean goToStow(){
       return secondXbox.getPOV() == 180;
     }
-    
-    public boolean goToL2Ball(){
-        return secondXbox.getXButton();
-    }
-
-    public boolean goToL3Ball(){
-        return secondXbox.getBButton();
-    }
-
-    // public boolean goToShootBall(){
-    //     return secondXbox.getYButton();
-    // }
-
-    public boolean shiftedControls(){
-      return secondXbox.getRightBumperButton();
-    }
-
-    // public boolean goToGroundBall() {
-    //   return secondXbox.getAButton();
-    // }
 
 
     // pipe and ball grabber 
@@ -96,20 +76,14 @@ public class ManualControls {
     public boolean zeroNoAprilTagsGyro() {
       return secondXbox.getStartButton();
     }
-  
-    // flywheel
-    public boolean shootWithLimelight(){
-      return secondXbox.getRightBumperButton();
-    }
 
-    //hood
-    public boolean hoodManualUp(){
-      return secondXbox.getYButton();
-    }
-    public boolean hoodManualDown(){
+    public boolean Turret0() {
       return secondXbox.getAButton();
     }
 
+    public boolean Turret90() {
+      return secondXbox.getXButton();
+    }
 
 
     // tests 

@@ -10,9 +10,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.vision.LimelightVision;
 import frc.robot.subsystems.vision.VisionSubsystem;
-import frc.robot.subsystems.Hood;
-import frc.robot.subsystems.ShotCalculator;
-import frc.robot.subsystems.Flywheel;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,8 +20,9 @@ import swervelib.SwerveInputStream;
 import edu.wpi.first.math.geometry.Pose3d;
 import frc.robot.Constants.LimelightConstants;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.FlywheelCommand;
-import frc.robot.commands.HoodCommand;
+
+import frc.robot.commands.TurretCommand;
+import frc.robot.subsystems.superstructure.Turret;
 // import frc.robot.autonomous.AutoModeChooser;
 // import frc.robot.autonomous.AutoCommands;
 // import frc.robot.autonomous.AutoNames;
@@ -46,14 +44,12 @@ public class RobotContainer {
     
     private final VisionSubsystem vision;
 
-     private final ShotCalculator shotCalc = new ShotCalculator(() -> drivebase.getPose());
-
     // Subsystems
 
    // private final AutoCommands factory;
     //private final AutoModeChooser autoChooser;
-    private final Flywheel flywheel = new Flywheel(() -> drivebase.getPose()); 
-    private final Hood hood = new Hood(() -> drivebase.getPose());
+    private final Turret turret = new Turret(); 
+    
 
     SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
       () -> driverXbox.getLeftY() * -1,
@@ -66,9 +62,7 @@ public class RobotContainer {
 
     public RobotContainer() {
 
-        flywheel.setDefaultCommand(new FlywheelCommand(flywheel, shotCalc, controls));
-
-        hood.setDefaultCommand(new HoodCommand(hood, controls, shotCalc));
+        turret.setDefaultCommand(new TurretCommand(turret, controls));
      // factory = new AutoCommands(drivebase);
 
       //autoChooser = new AutoModeChooser(factory);
@@ -87,14 +81,6 @@ public class RobotContainer {
     private void configureBindings() {
         Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
         drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
-        driverXbox.a().onTrue(
-          Commands.defer(() -> {
-            return Commands.runOnce(() -> vision.hardReset("limelight"), vision);
-          }, Set.of(vision))
-        );
-        driverXbox.y().onTrue(Commands.runOnce(() -> CommandScheduler.getInstance().cancelAll()));
-        driverXbox.x().onTrue(Commands.defer(() -> drivebase.alignToTrenchCommand(), Set.of(drivebase)));
-        driverXbox.b().onTrue(Commands.runOnce(() -> CommandScheduler.getInstance().schedule(drivebase.sysIdDriveMotorCommand()), drivebase));
         driverXbox.start().onTrue((Commands.runOnce(drivebase::zeroNoAprilTagsGyro)));
         driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
     }
