@@ -133,8 +133,21 @@ public class RobotContainer {
             return Commands.runOnce(() -> vision.hardReset("limelight"), vision);
           }, Set.of(vision))
         );
-        
+
         driverXbox.start().onTrue((Commands.runOnce(drivebase::zeroNoAprilTagsGyro)));
+
+        // Manual flywheel control for calibration (operator controller)
+        // D-Pad Up: Increase flywheel speed by 50 RPM
+        new Trigger(controls::increaseFlywheelSpeed)
+            .onTrue(Commands.runOnce(() -> flywheel.adjustRPM(50), flywheel));
+
+        // D-Pad Down: Decrease flywheel speed by 50 RPM
+        new Trigger(controls::decreaseFlywheelSpeed)
+            .onTrue(Commands.runOnce(() -> flywheel.adjustRPM(-50), flywheel));
+
+        // D-Pad Left: Reset flywheel to idle speed
+        new Trigger(controls::resetFlywheelSpeed)
+            .onTrue(Commands.runOnce(() -> flywheel.setIdle(), flywheel));
     }
 
     public Command getAutonomousCommand() {

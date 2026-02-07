@@ -106,7 +106,7 @@ public final class Constants {
     public static final int LEFT_FLYWHEEL_ID = 20; // TODO: set correct ID
 
     
-    public static final double kV = 0.0; // TODO: tune
+    public static final double kV = 0.12; // TODO: tune with SysId
     public static final double kP = 1.3; // TODO: tune
     public static final double kI = 0.01; // TODO: tune
     public static final double kD = 0.2; // TODO: tune
@@ -116,7 +116,7 @@ public final class Constants {
     public static final double FLYWHEEL_RPM_TOLERANCE = 100.0;
     public static final double FLYWHEEL_MAX_RPM = 3200.0;
 
-    public static final double FLYWHEEL_SUPPLY_CURRENT_LIMIT = 0;
+    public static final double FLYWHEEL_SUPPLY_CURRENT_LIMIT = 40.0;
 
     public static final Slot0Configs FLYWHEEL_PID_CONFIG = null;
 
