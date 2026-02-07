@@ -43,14 +43,13 @@ public class SnotmCommand extends Command {
 
     @Override
     public void initialize() {
-        flywheel.setRPM(800);
     }
 
     @Override
     public void execute() {
         // Run shooting state machine every scheduler cycle so limelight alignment and
         // flywheel RPM calculation run continuously.
-        // snotm.ShootBall();
+        snotm.ShootBall();
     }
 
 
