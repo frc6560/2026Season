@@ -129,6 +129,8 @@ public final class Constants {
       {5.0, 2000.0}
       // TODO: Fill in with actual measured values
     };
+    public static final double kS = 0;
+    public static final int FLYWHEEL_STATOR_CURRENT_LIMIT = 0;
   }
 
   public static final class HoodConstants {
