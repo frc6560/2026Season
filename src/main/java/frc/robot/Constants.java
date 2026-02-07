@@ -96,10 +96,11 @@ public final class Constants {
     public static final int RIGHT_FLYWHEEL_ID = 20;
 
     /** PID Gains */
-    public static final double kP = 1.3;
-    public static final double kI = 0.01;
-    public static final double kD = 0.2;
-    public static final double kV = 0.0; // TODO: tune
+    public static final double kP = 0.2;
+    public static final double kI = 0.0;
+    public static final double kD = 0.0;
+    public static final double kV = 0.12; // TODO: tune
+     public static final double kS = 0.25;
 
     /** Flywheel Geometry */
        public static final double MAX_RPM = 5000; // Example value for Falcon 500
@@ -129,7 +130,7 @@ public final class Constants {
       {5.0, 2000.0}
       // TODO: Fill in with actual measured values
     };
-    public static final double kS = 0;
+   
     public static final int FLYWHEEL_STATOR_CURRENT_LIMIT = 0;
   }
 
