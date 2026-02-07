@@ -69,17 +69,17 @@ public class ManualControls {
         return secondXbox.getBButton();
     }
 
-    public boolean goToShootBall(){
-        return secondXbox.getYButton();
-    }
+    // public boolean goToShootBall(){
+    //     return secondXbox.getYButton();
+    // }
 
     public boolean shiftedControls(){
       return secondXbox.getRightBumperButton();
     }
 
-    public boolean goToGroundBall() {
-      return secondXbox.getAButton();
-    }
+    // public boolean goToGroundBall() {
+    //   return secondXbox.getAButton();
+    // }
 
 
     // pipe and ball grabber 
@@ -89,9 +89,9 @@ public class ManualControls {
       return secondXbox.getLeftBumperButton();
     }
 
-    public boolean runOuttake() {
-      return secondXbox.getRightBumperButton();
-    }
+    // public boolean runOuttake() {
+    //   return secondXbox.getRightBumperButton();
+    // }
 
     public boolean zeroNoAprilTagsGyro() {
       return secondXbox.getStartButton();
@@ -99,15 +99,15 @@ public class ManualControls {
   
     // flywheel
     public boolean shootWithLimelight(){
-      return firstXbox.getRightBumperButton();
+      return secondXbox.getRightBumperButton();
     }
 
     //hood
     public boolean hoodManualUp(){
-      return firstXbox.getYButton();
+      return secondXbox.getYButton();
     }
     public boolean hoodManualDown(){
-      return firstXbox.getAButton();
+      return secondXbox.getAButton();
     }
 
 
